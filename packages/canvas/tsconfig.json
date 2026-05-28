@@ -3,6 +3,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
+      "@notux/sync": ["../sync/src"],
       "@notux/types": ["../types/src"]
     }
   },

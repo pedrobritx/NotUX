@@ -1,1 +1,3 @@
-export const SYNC_PACKAGE_VERSION = "0.0.0";
+export { getBoardDoc } from "./boardDoc";
+export { getIndexedDbProvider } from "./indexedDbProvider";
+export { findPageMap, getPageMap } from "./pageMap";
