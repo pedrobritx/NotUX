@@ -3,6 +3,7 @@ import type { ToolKind, YShape } from "@notux/types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Stage } from "react-konva";
 import { newAuthorId } from "./ids";
+import { useUndoManager } from "./hooks/useUndoManager";
 import { BackgroundLayer } from "./layers/BackgroundLayer";
 import { OverlayLayer } from "./layers/OverlayLayer";
 import { ShapesLayer } from "./layers/ShapesLayer";
@@ -53,6 +54,8 @@ export function CanvasStage({ boardId: _boardId, pageId = DEFAULT_PAGE_ID }: Pro
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [viewport, setViewport] = useState({ x: 0, y: 0, scale: 1 });
   const [spaceHeld, setSpaceHeld] = useState(false);
+
+  const { undo, redo } = useUndoManager(pageId);
 
   const tool = useToolStore((s) => s.tool);
   const selection = useToolStore((s) => s.selection);
@@ -141,13 +144,24 @@ export function CanvasStage({ boardId: _boardId, pageId = DEFAULT_PAGE_ID }: Pro
     toolRef.current = makeTool(tool);
   }, [tool, buildToolContext]);
 
-  // Space-to-pan + tool keyboard handlers (Delete, Escape).
+  // Space-to-pan, undo/redo, and tool keyboard handlers (Delete, Escape).
   useEffect(() => {
     function down(e: KeyboardEvent) {
       if (isTypingTarget(e.target)) return;
       if (e.code === "Space") {
         e.preventDefault();
         setSpaceHeld(true);
+        return;
+      }
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+        return;
+      }
+      if (mod && (e.key === "y" || (e.key === "z" && e.shiftKey))) {
+        e.preventDefault();
+        redo();
         return;
       }
       const handler = toolRef.current.onKeyDown;
@@ -162,7 +176,7 @@ export function CanvasStage({ boardId: _boardId, pageId = DEFAULT_PAGE_ID }: Pro
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
     };
-  }, [buildToolContext]);
+  }, [buildToolContext, undo, redo]);
 
   const panRef = useRef<{ active: boolean; lastX: number; lastY: number }>({
     active: false,
