@@ -4,7 +4,9 @@ A collaborative infinite whiteboard for teaching — pen, shapes, text, PDFs, re
 
 ## Status
 
-Milestone 1 — Skeleton. Vite + React app, Supabase magic-link auth, two routes (`/`, `/board/:id`), workspace stubs for `@notux/canvas`, `@notux/sync`, `@notux/ui`, `@notux/types`, Supabase migration, and GitHub Pages deploy workflow. Canvas, real-time sync, tools, PDF import, and Liquid Glass dock land in later milestones.
+Milestone 4 — Realtime collaboration. The canvas (M2), local Yjs persistence + undo/redo (M3), and now realtime multiplayer sync are in place: edits and live cursors sync between everyone on a board over Supabase Realtime, with the board falling back to local-only mode when Supabase isn't configured. PDF import and the Liquid Glass dock land in later milestones.
+
+Realtime requires Supabase Realtime to be reachable by the `anon` role for the `notux-board-*` broadcast topics (the default, no-authorization Realtime mode works out of the box). Late-joiners get current board state from connected peers; persisting snapshots server-side for offline late-joiners is a later milestone.
 
 ## Repo layout
 

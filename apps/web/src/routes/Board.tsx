@@ -3,19 +3,28 @@ import { Link, useParams } from "react-router-dom";
 import { CanvasStage, useShapeStore } from "@notux/canvas";
 import { SaveStatus } from "../features/canvas/SaveStatus";
 import { ToolPalette } from "../features/canvas/ToolPalette";
+import { useIdentity } from "../features/canvas/useIdentity";
+import { getSupabase } from "../lib/supabase";
 
 export default function Board() {
   const { boardId } = useParams<{ boardId: string }>();
   const [ready, setReady] = useState(false);
+  const identity = useIdentity();
 
   useEffect(() => {
     if (!boardId) return;
     setReady(false);
+    // Enable realtime collaboration when Supabase is configured; otherwise the
+    // board runs in local-only mode against IndexedDB.
+    const client = getSupabase();
+    useShapeStore
+      .getState()
+      .configureRealtime(client ? { client, identity } : null);
     useShapeStore
       .getState()
       .initBoard(boardId)
       .then(() => setReady(true));
-  }, [boardId]);
+  }, [boardId, identity]);
 
   if (!ready) {
     return (
