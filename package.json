@@ -1,0 +1,15 @@
+{
+  "name": "notux",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@9.12.0",
+  "scripts": {
+    "dev": "pnpm -F @notux/web dev",
+    "build": "pnpm -F @notux/web build",
+    "preview": "pnpm -F @notux/web preview",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.2"
+  }
+}

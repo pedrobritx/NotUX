@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["vite/client"],
+    "baseUrl": ".",
+    "paths": {
+      "@notux/canvas": ["../../packages/canvas/src"],
+      "@notux/sync": ["../../packages/sync/src"],
+      "@notux/ui": ["../../packages/ui/src"],
+      "@notux/types": ["../../packages/types/src"]
+    }
+  },
+  "include": ["src", "scripts"]
+}
