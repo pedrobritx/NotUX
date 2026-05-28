@@ -160,42 +160,108 @@ a {
   overflow: hidden;
 }
 
-.board__canvas-placeholder {
+.board__canvas {
   position: absolute;
   inset: 0;
   background:
     radial-gradient(1px 1px at 24px 24px, rgba(255, 255, 255, 0.06) 1px, transparent 1px) 0 0 / 48px 48px,
     var(--bg-1);
-  display: grid;
-  place-items: center;
-  color: var(--fg-1);
 }
 
-.board__id-pill {
-  padding: 8px 16px;
-  border-radius: 999px;
-  background: var(--glass-tint);
-  border: 1px solid var(--glass-stroke);
-  backdrop-filter: blur(18px) saturate(180%);
-  -webkit-backdrop-filter: blur(18px) saturate(180%);
-  font-size: 12px;
-  letter-spacing: 0.04em;
-}
-
-.board__dock-stub {
+.tool-palette {
   position: absolute;
-  left: 50%;
-  bottom: 32px;
-  transform: translateX(-50%);
-  padding: 12px 22px;
-  border-radius: 28px;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 18px;
   background: var(--glass-tint);
   border: 1px solid var(--glass-stroke);
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
-  font-size: 13px;
-  color: var(--fg-1);
   box-shadow: var(--shadow-lg);
+  z-index: 5;
+}
+
+.tool-palette__row {
+  display: grid;
+  grid-template-columns: repeat(3, 36px);
+  gap: 6px;
+}
+
+.tool-palette__row--swatches,
+.tool-palette__row--sizes {
+  grid-template-columns: repeat(6, 1fr);
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.tool-palette__row--sizes {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.tool-palette__chip {
+  appearance: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--fg-0);
+  font-size: 16px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.tool-palette__chip:hover {
+  background: rgba(255, 255, 255, 0.10);
+}
+
+.tool-palette__chip--active {
+  background: rgba(90, 200, 250, 0.22);
+  border-color: rgba(90, 200, 250, 0.55);
+}
+
+.tool-palette__swatch {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  padding: 0;
+}
+
+.tool-palette__swatch--active {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.tool-palette__size {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+}
+
+.tool-palette__size span {
+  display: block;
+  background: var(--fg-0);
+  border-radius: 999px;
+}
+
+.tool-palette__size--active {
+  background: rgba(90, 200, 250, 0.22);
+  border-color: rgba(90, 200, 250, 0.55);
 }
 
 .board__home-link {
