@@ -10,5 +10,7 @@ export type {
   YArrow,
   YText,
   YAssetRef,
+  YShape,
+  YShapeKind,
   ToolKind,
 } from "./yshape";

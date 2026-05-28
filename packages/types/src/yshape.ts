@@ -88,3 +88,14 @@ export interface YAssetRef extends YShapeBase {
   h: number;
   rot: number;
 }
+
+export type YShape =
+  | YStroke
+  | YRect
+  | YEllipse
+  | YLine
+  | YArrow
+  | YText
+  | YAssetRef;
+
+export type YShapeKind = YShape["kind"];
