@@ -2,13 +2,15 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   CanvasStage,
-  DEFAULT_PAGE_ID,
   useAssetStore,
+  usePageStore,
   useShapeStore,
 } from "@notux/canvas";
+import { useTheme } from "@notux/ui";
+import { Dock } from "../features/canvas/Dock";
+import { PageNavigator } from "../features/canvas/PageNavigator";
 import { SaveStatus } from "../features/canvas/SaveStatus";
 import { SelectionInspector } from "../features/canvas/SelectionInspector";
-import { ToolPalette } from "../features/canvas/ToolPalette";
 import { useIdentity } from "../features/canvas/useIdentity";
 import { getSupabase } from "../lib/supabase";
 
@@ -16,6 +18,8 @@ export default function Board() {
   const { boardId } = useParams<{ boardId: string }>();
   const [ready, setReady] = useState(false);
   const identity = useIdentity();
+  const activePageId = usePageStore((s) => s.activePageId);
+  const { theme } = useTheme();
 
   useEffect(() => {
     if (!boardId) return;
@@ -31,7 +35,11 @@ export default function Board() {
     useShapeStore
       .getState()
       .initBoard(boardId)
-      .then(() => setReady(true));
+      .then(() => {
+        // Seed/migrate the page list against the IndexedDB-hydrated doc.
+        usePageStore.getState().initPages(boardId);
+        setReady(true);
+      });
   }, [boardId, identity]);
 
   if (!ready) {
@@ -62,9 +70,10 @@ export default function Board() {
 
   return (
     <div className="board">
-      <CanvasStage boardId={boardId!} />
-      <ToolPalette />
-      <SelectionInspector pageId={DEFAULT_PAGE_ID} />
+      <CanvasStage boardId={boardId!} pageId={activePageId} theme={theme} />
+      <PageNavigator />
+      <Dock />
+      <SelectionInspector pageId={activePageId} />
       <SaveStatus />
       <Link className="board__home-link" to="/">
         ← Home

@@ -11,3 +11,7 @@ export function newAuthorId(): string {
 export function newAssetId(): string {
   return nanoid(12);
 }
+
+export function newPageId(): string {
+  return "page-" + nanoid(10);
+}

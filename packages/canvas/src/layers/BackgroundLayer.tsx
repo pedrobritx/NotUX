@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Circle, Layer } from "react-konva";
+import { cssVar } from "../theme/cssVar";
 import type { ViewportState } from "../viewport/Viewport";
 
 interface Props {
@@ -34,6 +35,8 @@ export function BackgroundLayer({ viewport, width, height }: Props) {
     return out;
   }, [viewport.x, viewport.y, viewport.scale, width, height]);
 
+  const dotFill = cssVar("--canvas-dot", "rgba(255, 255, 255, 0.10)");
+
   return (
     <Layer listening={false}>
       {dots.map((d, i) => (
@@ -42,7 +45,7 @@ export function BackgroundLayer({ viewport, width, height }: Props) {
           x={d.x}
           y={d.y}
           radius={1 / viewport.scale}
-          fill="rgba(255, 255, 255, 0.10)"
+          fill={dotFill}
         />
       ))}
     </Layer>

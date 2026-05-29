@@ -25,6 +25,9 @@ import { screenToWorld, zoomAt } from "./viewport/Viewport";
 interface Props {
   boardId: string;
   pageId?: string;
+  // Changing this (the app's active theme) re-renders the Konva layers so they
+  // re-read CSS-variable colors via cssVar(). The value itself is unused.
+  theme?: string;
 }
 
 const ZOOM_PER_WHEEL_PIXEL = 0.0015;
@@ -49,7 +52,11 @@ function isTypingTarget(t: EventTarget | null): boolean {
   return tag === "INPUT" || tag === "TEXTAREA" || t.isContentEditable;
 }
 
-export function CanvasStage({ boardId: _boardId, pageId = DEFAULT_PAGE_ID }: Props) {
+export function CanvasStage({
+  boardId: _boardId,
+  pageId = DEFAULT_PAGE_ID,
+  theme: _theme,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const shapesLayerRef = useRef<Konva.Layer>(null);

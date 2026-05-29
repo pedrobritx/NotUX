@@ -9,6 +9,17 @@ export type ToolKind =
   | "text"
   | "select";
 
+// Visual variant of a freehand stroke. The canvas/tool discriminator stays
+// `tool` ("pen" | "highlighter"); `style` is the finer instrument look the
+// Liquid Glass dock writes (M7). Optional → strokes from before M7 render as
+// plain pens.
+export type StrokeStyle =
+  | "pen"
+  | "fineliner"
+  | "pencil"
+  | "marker"
+  | "highlighter";
+
 export interface YShapeBase {
   id: string;
   author: string;
@@ -22,6 +33,9 @@ export interface YShapeBase {
 export interface YStroke extends YShapeBase {
   kind: "stroke";
   tool: "pen" | "highlighter";
+  // Instrument variant for rendering (caps, blend, texture). Optional for
+  // back-compat with strokes authored before M7.
+  style?: StrokeStyle;
   color: string;
   size: number;
   points: number[];
