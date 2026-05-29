@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { CanvasStage, DEFAULT_PAGE_ID, useShapeStore } from "@notux/canvas";
+import {
+  CanvasStage,
+  DEFAULT_PAGE_ID,
+  useAssetStore,
+  useShapeStore,
+} from "@notux/canvas";
 import { SaveStatus } from "../features/canvas/SaveStatus";
 import { SelectionInspector } from "../features/canvas/SelectionInspector";
 import { ToolPalette } from "../features/canvas/ToolPalette";
@@ -21,6 +26,8 @@ export default function Board() {
     useShapeStore
       .getState()
       .configureRealtime(client ? { client, identity } : null);
+    // Bytes live in Supabase Storage; import is disabled when client is null.
+    useAssetStore.getState().configure({ boardId, client });
     useShapeStore
       .getState()
       .initBoard(boardId)

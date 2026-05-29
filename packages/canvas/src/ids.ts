@@ -7,3 +7,7 @@ export function newShapeId(): string {
 export function newAuthorId(): string {
   return nanoid(8);
 }
+
+export function newAssetId(): string {
+  return nanoid(12);
+}

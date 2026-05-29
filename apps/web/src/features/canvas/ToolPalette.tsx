@@ -1,5 +1,6 @@
+import { useRef } from "react";
 import type { ToolKind } from "@notux/types";
-import { useToolStore } from "@notux/canvas";
+import { useAssetStore, useToolStore } from "@notux/canvas";
 import { COLORS, SIZES } from "./palette";
 
 interface ToolDef {
@@ -27,6 +28,8 @@ export function ToolPalette() {
   const setTool = useToolStore((s) => s.setTool);
   const setColor = useToolStore((s) => s.setColor);
   const setSize = useToolStore((s) => s.setSize);
+  const canImport = useAssetStore((s) => s.canImport);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   return (
     <div className="tool-palette" role="toolbar" aria-label="Drawing tools">
@@ -46,6 +49,30 @@ export function ToolPalette() {
             <span aria-hidden>{t.glyph}</span>
           </button>
         ))}
+        <button
+          type="button"
+          className="tool-palette__chip"
+          onClick={() => fileRef.current?.click()}
+          disabled={!canImport}
+          title={canImport ? "Import image or PDF" : "Import requires Supabase"}
+          aria-label="Import image or PDF"
+        >
+          <span aria-hidden>⬆</span>
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*,application/pdf"
+          multiple
+          style={{ display: "none" }}
+          onChange={(e) => {
+            const files = e.target.files;
+            if (files && files.length > 0) {
+              void useAssetStore.getState().importAtCenter(files);
+            }
+            e.target.value = "";
+          }}
+        />
       </div>
       <div className="tool-palette__row tool-palette__row--swatches">
         {COLORS.map((c) => (

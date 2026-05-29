@@ -10,6 +10,7 @@ import { OverlayLayer } from "./layers/OverlayLayer";
 import { PresenceLayer } from "./layers/PresenceLayer";
 import { ShapesLayer } from "./layers/ShapesLayer";
 import { TransformLayer } from "./layers/TransformLayer";
+import { useAssetStore } from "./store/assetStore";
 import { useDraftStore } from "./store/draftStore";
 import { DEFAULT_PAGE_ID } from "./store/pageStore";
 import { useShapeStore } from "./store/shapeStore";
@@ -100,6 +101,18 @@ export function CanvasStage({ boardId: _boardId, pageId = DEFAULT_PAGE_ID }: Pro
     setSize({ w: r.width, h: r.height });
     return () => ro.disconnect();
   }, []);
+
+  // Keep the asset store aware of the current viewport/size/page/author so a
+  // button-triggered import (which has no drop point) lands at the canvas centre
+  // and is attributed to this canvas's author.
+  useEffect(() => {
+    useAssetStore.getState().setCanvasInfo({
+      viewport,
+      size,
+      pageId,
+      authorId: authorIdRef.current,
+    });
+  }, [viewport, size, pageId]);
 
   // Hit test — converts world point to container coords and asks Konva.
   const hitTestWorld = useCallback(
@@ -348,6 +361,31 @@ export function CanvasStage({ boardId: _boardId, pageId = DEFAULT_PAGE_ID }: Pro
     }
   }, []);
 
+  // File drag-and-drop import. dragover must preventDefault for drop to fire.
+  const onDragOver = useCallback((evt: React.DragEvent<HTMLDivElement>) => {
+    if (!evt.dataTransfer.types.includes("Files")) return;
+    evt.preventDefault();
+    evt.dataTransfer.dropEffect = "copy";
+  }, []);
+
+  const onDrop = useCallback(
+    (evt: React.DragEvent<HTMLDivElement>) => {
+      const files = evt.dataTransfer.files;
+      if (!files || files.length === 0) return;
+      evt.preventDefault();
+      if (!useAssetStore.getState().canImport) {
+        console.warn("Import requires Supabase to be configured");
+        return;
+      }
+      const rect = containerRef.current?.getBoundingClientRect();
+      const sx = evt.clientX - (rect?.left ?? 0);
+      const sy = evt.clientY - (rect?.top ?? 0);
+      const world = screenToWorld(viewport, sx, sy);
+      void useAssetStore.getState().importAt(files, world);
+    },
+    [viewport],
+  );
+
   // Suppress browser-level zoom on wheel by attaching a non-passive listener.
   // React's onWheel handler is passive in newer React versions and can't
   // preventDefault, so we add a native listener for that purpose.
@@ -423,6 +461,8 @@ export function CanvasStage({ boardId: _boardId, pageId = DEFAULT_PAGE_ID }: Pro
       onPointerCancel={onPointerUp}
       onPointerLeave={onPointerLeave}
       onWheel={onWheel}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
       onDoubleClick={onDoubleClick}
       onContextMenu={(e) => e.preventDefault()}
     >
