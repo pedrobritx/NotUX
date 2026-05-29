@@ -1,5 +1,6 @@
 import type { ToolKind } from "@notux/types";
 import { useToolStore } from "@notux/canvas";
+import { COLORS, SIZES } from "./palette";
 
 interface ToolDef {
   kind: ToolKind;
@@ -18,9 +19,6 @@ const TOOLS: ToolDef[] = [
   { kind: "arrow", label: "Arrow", glyph: "→" },
   { kind: "text", label: "Text", glyph: "T" },
 ];
-
-const COLORS = ["#ffffff", "#5ac8fa", "#ffd60a", "#ff453a", "#34c759", "#bf5af2"];
-const SIZES = [2, 4, 8, 14];
 
 // Temporary palette — the real Liquid Glass dock lands in M7.
 export function ToolPalette() {

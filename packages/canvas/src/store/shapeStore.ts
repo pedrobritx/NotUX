@@ -33,6 +33,74 @@ interface ShapeStoreState {
   deleteShape(pageId: string, id: string): void;
   deleteShapes(pageId: string, ids: Iterable<string>): void;
   transact(fn: () => void): void;
+
+  // Per-object lock (M5 P3). Locked shapes opt out of select-drag, transform,
+  // delete, erase, and marquee — see SelectTool / EraserTool / TransformLayer.
+  setLocked(pageId: string, id: string, locked: boolean): void;
+
+  // Z-order (M5 P3). Each op rewrites a dense 0..n-1 `z` over the page in one
+  // transaction so values stay compact and ordering is well-defined.
+  bringToFront(pageId: string, ids: Iterable<string>): void;
+  sendToBack(pageId: string, ids: Iterable<string>): void;
+  bringForward(pageId: string, ids: Iterable<string>): void;
+  sendBackward(pageId: string, ids: Iterable<string>): void;
+}
+
+type ArrangeMode = "front" | "back" | "forward" | "backward";
+
+// Pure reorder of a z-sorted array (index 0 = back, last = front). Moves the
+// selected ids per `mode`; the caller writes a dense z over the result.
+function reorderForArrange(
+  sorted: YShape[],
+  selected: Set<string>,
+  mode: ArrangeMode,
+): YShape[] {
+  const isSel = (s: YShape) => selected.has(s.id);
+  if (mode === "front") {
+    return [...sorted.filter((s) => !isSel(s)), ...sorted.filter(isSel)];
+  }
+  if (mode === "back") {
+    return [...sorted.filter(isSel), ...sorted.filter((s) => !isSel(s))];
+  }
+  const arr = sorted.slice();
+  if (mode === "forward") {
+    // Top-down: swap each selected shape with the unselected neighbor above it.
+    for (let i = arr.length - 2; i >= 0; i--) {
+      const a = arr[i];
+      const b = arr[i + 1];
+      if (a && b && isSel(a) && !isSel(b)) {
+        arr[i] = b;
+        arr[i + 1] = a;
+      }
+    }
+  } else {
+    // backward: bottom-up, swap with the unselected neighbor below.
+    for (let i = 1; i < arr.length; i++) {
+      const a = arr[i];
+      const b = arr[i - 1];
+      if (a && b && isSel(a) && !isSel(b)) {
+        arr[i] = b;
+        arr[i - 1] = a;
+      }
+    }
+  }
+  return arr;
+}
+
+function applyArrange(
+  get: () => ShapeStoreState,
+  pageId: string,
+  idsIter: Iterable<string>,
+  mode: ArrangeMode,
+) {
+  const ids = new Set(idsIter);
+  if (ids.size === 0) return;
+  const next = reorderForArrange(get().listShapes(pageId), ids, mode);
+  get().transact(() => {
+    next.forEach((s, i) => {
+      if ((s.z ?? -1) !== i) get().updateShape(pageId, s.id, { z: i });
+    });
+  });
 }
 
 export const useShapeStore = create<ShapeStoreState>((set, get) => ({
@@ -81,7 +149,12 @@ export const useShapeStore = create<ShapeStoreState>((set, get) => ({
     if (!doc) return [];
     const pageMap = findPageMap(doc, pageId);
     if (!pageMap) return [];
-    return Array.from(pageMap.values());
+    // Sort by z, falling back to insertion order (Y.Map iterates in insertion
+    // order). A board with no z fields renders in exactly its insertion order.
+    return Array.from(pageMap.values())
+      .map((s, i) => ({ s, i }))
+      .sort((a, b) => (a.s.z ?? a.i) - (b.s.z ?? b.i) || a.i - b.i)
+      .map((e) => e.s);
   },
 
   getShape(pageId, id) {
@@ -136,6 +209,23 @@ export const useShapeStore = create<ShapeStoreState>((set, get) => ({
       return;
     }
     doc.transact(fn);
+  },
+
+  setLocked(pageId, id, locked) {
+    get().updateShape(pageId, id, { locked });
+  },
+
+  bringToFront(pageId, ids) {
+    applyArrange(get, pageId, ids, "front");
+  },
+  sendToBack(pageId, ids) {
+    applyArrange(get, pageId, ids, "back");
+  },
+  bringForward(pageId, ids) {
+    applyArrange(get, pageId, ids, "forward");
+  },
+  sendBackward(pageId, ids) {
+    applyArrange(get, pageId, ids, "backward");
   },
 }));
 

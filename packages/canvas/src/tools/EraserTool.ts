@@ -11,7 +11,7 @@ export function makeEraserTool(): Tool {
 
   function eraseAt(p: ToolEventPoint, ctx: ToolContext) {
     const hit = ctx.hitTest({ x: p.x, y: p.y });
-    if (hit) {
+    if (hit && !hit.locked) {
       ctx.store.transact(() => ctx.store.deleteShape(ctx.pageId, hit.id));
     }
   }
