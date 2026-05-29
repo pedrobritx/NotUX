@@ -7,10 +7,11 @@ interface Props {
 }
 
 export function TextRenderer({ shape, selected }: Props) {
+  // Local coords; the ShapesLayer Group carries x/y/rotation.
   return (
     <Text
-      x={shape.x}
-      y={shape.y}
+      x={0}
+      y={0}
       width={shape.w > 0 ? shape.w : undefined}
       text={shape.content}
       fontFamily={shape.font}

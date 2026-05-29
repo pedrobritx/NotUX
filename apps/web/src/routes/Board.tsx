@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { CanvasStage, useShapeStore } from "@notux/canvas";
+import { CanvasStage, DEFAULT_PAGE_ID, useShapeStore } from "@notux/canvas";
 import { SaveStatus } from "../features/canvas/SaveStatus";
+import { SelectionInspector } from "../features/canvas/SelectionInspector";
 import { ToolPalette } from "../features/canvas/ToolPalette";
 import { useIdentity } from "../features/canvas/useIdentity";
 import { getSupabase } from "../lib/supabase";
@@ -56,6 +57,7 @@ export default function Board() {
     <div className="board">
       <CanvasStage boardId={boardId!} />
       <ToolPalette />
+      <SelectionInspector pageId={DEFAULT_PAGE_ID} />
       <SaveStatus />
       <Link className="board__home-link" to="/">
         ← Home

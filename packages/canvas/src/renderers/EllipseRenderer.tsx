@@ -7,13 +7,14 @@ interface Props {
 }
 
 export function EllipseRenderer({ shape, selected }: Props) {
+  // Centered in local coords; the ShapesLayer Group (anchored at the shape's
+  // top-left) carries x/y/rotation for the Konva Transformer.
   return (
     <Ellipse
-      x={shape.x + shape.w / 2}
-      y={shape.y + shape.h / 2}
+      x={shape.w / 2}
+      y={shape.h / 2}
       radiusX={Math.abs(shape.w) / 2}
       radiusY={Math.abs(shape.h) / 2}
-      rotation={shape.rot}
       stroke={shape.stroke}
       strokeWidth={2}
       fill={shape.fill ?? undefined}

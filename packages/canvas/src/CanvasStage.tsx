@@ -9,6 +9,7 @@ import { BackgroundLayer } from "./layers/BackgroundLayer";
 import { OverlayLayer } from "./layers/OverlayLayer";
 import { PresenceLayer } from "./layers/PresenceLayer";
 import { ShapesLayer } from "./layers/ShapesLayer";
+import { TransformLayer } from "./layers/TransformLayer";
 import { useDraftStore } from "./store/draftStore";
 import { DEFAULT_PAGE_ID } from "./store/pageStore";
 import { useShapeStore } from "./store/shapeStore";
@@ -184,6 +185,36 @@ export function CanvasStage({ boardId: _boardId, pageId = DEFAULT_PAGE_ID }: Pro
         redo();
         return;
       }
+      // Arrange (z-order): Cmd/Ctrl+] forward, +Shift to front; [ backward,
+      // +Shift to back. Only intercept when something is selected, so the
+      // browser's history nav still works on an empty canvas.
+      if (mod && (e.key === "]" || e.key === "[")) {
+        const ids = Array.from(useToolStore.getState().selection);
+        if (ids.length === 0) return;
+        e.preventDefault();
+        const store = useShapeStore.getState();
+        if (e.key === "]") {
+          if (e.shiftKey) store.bringToFront(pageId, ids);
+          else store.bringForward(pageId, ids);
+        } else if (e.shiftKey) {
+          store.sendToBack(pageId, ids);
+        } else {
+          store.sendBackward(pageId, ids);
+        }
+        return;
+      }
+      // Lock toggle: Cmd/Ctrl+Shift+L (Shift required to avoid Cmd+L).
+      if (mod && e.shiftKey && (e.key === "l" || e.key === "L")) {
+        const ids = Array.from(useToolStore.getState().selection);
+        if (ids.length === 0) return;
+        e.preventDefault();
+        const store = useShapeStore.getState();
+        const allLocked = ids.every((id) => store.getShape(pageId, id)?.locked);
+        store.transact(() =>
+          ids.forEach((id) => store.setLocked(pageId, id, !allLocked)),
+        );
+        return;
+      }
       const handler = toolRef.current.onKeyDown;
       if (handler) handler(e, buildToolContext());
     }
@@ -196,7 +227,7 @@ export function CanvasStage({ boardId: _boardId, pageId = DEFAULT_PAGE_ID }: Pro
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
     };
-  }, [buildToolContext, undo, redo]);
+  }, [buildToolContext, undo, redo, pageId]);
 
   // Publish the local selection to awareness so peers can highlight it.
   useEffect(() => {
@@ -240,6 +271,19 @@ export function CanvasStage({ boardId: _boardId, pageId = DEFAULT_PAGE_ID }: Pro
         return;
       }
       if (native.button !== 0) return;
+      // If the pointer landed on a Transformer handle, let Konva drive the
+      // resize/rotate; don't also start a SelectTool drag on the shape below.
+      const stage = stageRef.current;
+      if (stage) {
+        const rect = containerRef.current?.getBoundingClientRect();
+        const sx = native.clientX - (rect?.left ?? 0);
+        const sy = native.clientY - (rect?.top ?? 0);
+        let n: Konva.Node | null = stage.getIntersection({ x: sx, y: sy });
+        while (n) {
+          if (n.getClassName() === "Transformer") return;
+          n = n.getParent();
+        }
+      }
       evt.currentTarget.setPointerCapture(native.pointerId);
       toolRef.current.onPointerDown(pointerToToolPoint(native), buildToolContext());
     },
@@ -324,7 +368,7 @@ export function CanvasStage({ boardId: _boardId, pageId = DEFAULT_PAGE_ID }: Pro
       const sy = evt.clientY - rect.top;
       const w = screenToWorld(viewport, sx, sy);
       const hit = hitTestWorld(w);
-      if (hit && hit.kind === "text") {
+      if (hit && hit.kind === "text" && !hit.locked) {
         useTextEditStore.getState().begin({
           editingId: hit.id,
           worldX: hit.x,
@@ -343,6 +387,21 @@ export function CanvasStage({ boardId: _boardId, pageId = DEFAULT_PAGE_ID }: Pro
   const selectedShapes = useMemo(
     () => shapes.filter((s) => selection.has(s.id)),
     [shapes, selection],
+  );
+
+  // The Transformer draws handles for transformable, unlocked shapes; the
+  // dashed OverlayLayer box covers the rest (strokes, lines, arrows) plus any
+  // locked shape (which the Transformer skips, and which renders amber).
+  const overlayShapes = useMemo(
+    () =>
+      selectedShapes.filter(
+        (s) =>
+          s.locked ||
+          s.kind === "stroke" ||
+          s.kind === "line" ||
+          s.kind === "arrow",
+      ),
+    [selectedShapes],
   );
 
   const cursor = spaceHeld ? "grab" : toolCursor(tool);

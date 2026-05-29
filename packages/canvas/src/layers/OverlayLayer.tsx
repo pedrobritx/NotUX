@@ -107,7 +107,7 @@ export function OverlayLayer({ draft, selectedShapes, viewport }: Props) {
             y={b.y - handleSize}
             width={b.w + handleSize * 2}
             height={b.h + handleSize * 2}
-            stroke="#5ac8fa"
+            stroke={shape.locked ? "#ffd60a" : "#5ac8fa"}
             strokeWidth={1.5 / viewport.scale}
             dash={[5 / viewport.scale, 3 / viewport.scale]}
           />

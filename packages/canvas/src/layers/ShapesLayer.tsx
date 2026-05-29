@@ -34,6 +34,31 @@ function renderShape(shape: YShape, selected: boolean) {
   }
 }
 
+// Box kinds carry their position/rotation on the wrapping Group so the Konva
+// Transformer pivots around the shape's own origin. Stroke/line/arrow draw at
+// absolute coords inside a Group left at the origin.
+function groupTransform(shape: YShape): {
+  x?: number;
+  y?: number;
+  rotation?: number;
+} {
+  switch (shape.kind) {
+    case "rect":
+    case "ellipse":
+    case "text":
+    case "asset":
+      return { x: shape.x, y: shape.y, rotation: shape.rot ?? 0 };
+    default:
+      return {};
+  }
+}
+
+function groupOpacity(shape: YShape): number {
+  if (shape.opacity !== undefined) return shape.opacity;
+  if (shape.kind === "stroke" && shape.tool === "highlighter") return 0.35;
+  return 1;
+}
+
 export const ShapesLayer = forwardRef<Konva.Layer, Props>(function ShapesLayer(
   { shapes, selection },
   ref,
@@ -41,7 +66,12 @@ export const ShapesLayer = forwardRef<Konva.Layer, Props>(function ShapesLayer(
   return (
     <Layer ref={ref}>
       {shapes.map((shape) => (
-        <Group key={shape.id} name={shape.id}>
+        <Group
+          key={shape.id}
+          name={shape.id}
+          opacity={groupOpacity(shape)}
+          {...groupTransform(shape)}
+        >
           {renderShape(shape, selection.has(shape.id))}
         </Group>
       ))}

@@ -16,7 +16,6 @@ export function StrokeRenderer({ shape, selected }: Props) {
       points={flat}
       closed
       fill={shape.color}
-      opacity={shape.tool === "highlighter" ? 0.35 : 1}
       lineCap="round"
       lineJoin="round"
       shadowColor={selected ? "#5ac8fa" : undefined}
