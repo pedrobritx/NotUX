@@ -26,7 +26,8 @@ export function makeSelectTool(): Tool {
     state.dragSnapshot.clear();
     for (const id of ctx.getSelection()) {
       const s = ctx.store.getShape(ctx.pageId, id);
-      if (s) state.dragSnapshot.set(id, s);
+      // Locked shapes are never dragged, even within a mixed selection.
+      if (s && !s.locked) state.dragSnapshot.set(id, s);
     }
   }
 
@@ -57,8 +58,14 @@ export function makeSelectTool(): Tool {
         } else if (!selection.has(hit.id)) {
           ctx.setSelection([hit.id]);
         }
-        state.mode = "drag";
-        snapshotSelection(ctx);
+        // Locked shapes can be selected (so the inspector can offer Unlock) but
+        // never enter a drag.
+        if (hit.locked) {
+          state.mode = "idle";
+        } else {
+          state.mode = "drag";
+          snapshotSelection(ctx);
+        }
       } else {
         if (!p.shift) ctx.setSelection([]);
         state.mode = "marquee";
@@ -89,7 +96,7 @@ export function makeSelectTool(): Tool {
         if (marquee.w > 2 && marquee.h > 2) {
           const hits = ctx
             .rectIntersect(marquee)
-            .filter((s) => boundsIntersect(shapeBounds(s), marquee));
+            .filter((s) => !s.locked && boundsIntersect(shapeBounds(s), marquee));
           const next = new Set(p.shift ? ctx.getSelection() : []);
           for (const s of hits) next.add(s.id);
           ctx.setSelection(next);
@@ -105,7 +112,9 @@ export function makeSelectTool(): Tool {
     },
     onKeyDown(e, ctx) {
       if (e.key === "Delete" || e.key === "Backspace") {
-        const ids = Array.from(ctx.getSelection());
+        const ids = Array.from(ctx.getSelection()).filter(
+          (id) => !ctx.store.getShape(ctx.pageId, id)?.locked,
+        );
         if (ids.length === 0) return;
         e.preventDefault();
         ctx.store.transact(() => ctx.store.deleteShapes(ctx.pageId, ids));

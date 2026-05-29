@@ -7,13 +7,14 @@ interface Props {
 }
 
 export function RectRenderer({ shape, selected }: Props) {
+  // Drawn in local coords; the ShapesLayer Group carries x/y/rotation so the
+  // Konva Transformer can resize/rotate around the shape's own origin.
   return (
     <Rect
-      x={shape.x}
-      y={shape.y}
+      x={0}
+      y={0}
       width={shape.w}
       height={shape.h}
-      rotation={shape.rot}
       stroke={shape.stroke}
       strokeWidth={2}
       fill={shape.fill ?? undefined}

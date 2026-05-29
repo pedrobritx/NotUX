@@ -13,6 +13,10 @@ export interface YShapeBase {
   id: string;
   author: string;
   locked?: boolean;
+  // Stacking order. undefined falls back to insertion order (see listShapes).
+  z?: number;
+  // 0..1. undefined renders fully opaque (highlighter strokes default to 0.35).
+  opacity?: number;
 }
 
 export interface YStroke extends YShapeBase {
@@ -72,6 +76,7 @@ export interface YText extends YShapeBase {
   y: number;
   w: number;
   h: number;
+  rot?: number;
   content: string;
   font: string;
   size: number;

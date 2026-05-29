@@ -9,13 +9,9 @@ interface Props {
 // Placeholder renderer for M2. M4–M5 (PDF/image import) replaces this with a
 // real renderer that loads the asset from Supabase Storage.
 export function AssetRefRenderer({ shape, selected }: Props) {
+  // Local coords; the ShapesLayer Group carries x/y/rotation.
   return (
-    <Group
-      x={shape.x}
-      y={shape.y}
-      rotation={shape.rot}
-      listening
-    >
+    <Group listening>
       <Rect
         width={shape.w}
         height={shape.h}
