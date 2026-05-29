@@ -3,6 +3,7 @@ import { Arrow, Ellipse, Layer, Line, Rect } from "react-konva";
 import type { DraftStore } from "../store/draftStore";
 import { strokeOutline } from "../renderers/strokeGeometry";
 import { shapeBounds } from "../tools/shapeOps";
+import { cssVar } from "../theme/cssVar";
 import type { ViewportState } from "../viewport/Viewport";
 
 interface Props {
@@ -18,6 +19,8 @@ interface Props {
 // between gestures by the tool that produced the draft.
 export function OverlayLayer({ draft, selectedShapes, viewport }: Props) {
   const handleSize = 6 / viewport.scale;
+  const selection = cssVar("--selection", "#5ac8fa");
+  const selectionFill = cssVar("--selection-fill", "rgba(90, 200, 250, 0.10)");
 
   return (
     <Layer listening={false}>
@@ -25,12 +28,16 @@ export function OverlayLayer({ draft, selectedShapes, viewport }: Props) {
         const flat = strokeOutline(draft.stroke.points, draft.stroke.pressure, {
           size: draft.stroke.size,
         });
+        const isHighlighter =
+          draft.stroke.tool === "highlighter" ||
+          draft.stroke.style === "highlighter";
         return (
           <Line
             points={flat}
             closed
             fill={draft.stroke.color}
-            opacity={draft.stroke.tool === "highlighter" ? 0.35 : 1}
+            opacity={draft.stroke.opacity}
+            globalCompositeOperation={isHighlighter ? "multiply" : undefined}
             lineCap="round"
             lineJoin="round"
           />
@@ -90,8 +97,8 @@ export function OverlayLayer({ draft, selectedShapes, viewport }: Props) {
           y={draft.marquee.y}
           width={draft.marquee.w}
           height={draft.marquee.h}
-          stroke="#5ac8fa"
-          fill="rgba(90, 200, 250, 0.10)"
+          stroke={selection}
+          fill={selectionFill}
           strokeWidth={1 / viewport.scale}
           dash={[6 / viewport.scale, 4 / viewport.scale]}
         />
@@ -107,7 +114,7 @@ export function OverlayLayer({ draft, selectedShapes, viewport }: Props) {
             y={b.y - handleSize}
             width={b.w + handleSize * 2}
             height={b.h + handleSize * 2}
-            stroke={shape.locked ? "#ffd60a" : "#5ac8fa"}
+            stroke={shape.locked ? "#ffd60a" : selection}
             strokeWidth={1.5 / viewport.scale}
             dash={[5 / viewport.scale, 3 / viewport.scale]}
           />

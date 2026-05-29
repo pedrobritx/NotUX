@@ -1,9 +1,12 @@
+import type { StrokeStyle } from "@notux/types";
 import { create } from "zustand";
 
 export interface DraftStroke {
   tool: "pen" | "highlighter";
+  style: StrokeStyle;
   color: string;
   size: number;
+  opacity: number;
   points: number[];
   pressure: number[];
 }

@@ -1,15 +1,8 @@
+/* Theme tokens live in @notux/ui's styles.css (imported first); this :root
+   only carries the shared font. */
 :root {
-  --bg-0: #07090d;
-  --bg-1: #0e1218;
-  --fg-0: rgba(255, 255, 255, 0.92);
-  --fg-1: rgba(255, 255, 255, 0.62);
-  --accent: #5ac8fa;
-  --glass-tint: rgba(255, 255, 255, 0.10);
-  --glass-stroke: rgba(255, 255, 255, 0.22);
-  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.45);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter",
     system-ui, sans-serif;
-  color-scheme: dark;
 }
 
 * {
@@ -19,7 +12,7 @@
 html, body, #root {
   margin: 0;
   height: 100%;
-  background: radial-gradient(120% 80% at 20% 0%, #1a2540 0%, var(--bg-0) 60%);
+  background: var(--bg-0);
   color: var(--fg-0);
   overflow: hidden;
 }
@@ -74,7 +67,7 @@ a {
   font-size: clamp(48px, 8vw, 96px);
   margin: 0;
   letter-spacing: -0.04em;
-  background: linear-gradient(180deg, #ffffff 0%, #b4c2d6 100%);
+  background: linear-gradient(180deg, var(--fg-0) 0%, var(--accent) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -120,7 +113,7 @@ a {
 
 .home__auth-row input {
   flex: 1;
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--field-bg);
   border: 1px solid var(--glass-stroke);
   color: var(--fg-0);
   border-radius: 999px;
@@ -163,106 +156,12 @@ a {
 .board__canvas {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(1px 1px at 24px 24px, rgba(255, 255, 255, 0.06) 1px, transparent 1px) 0 0 / 48px 48px,
-    var(--bg-1);
+  /* The world-space dot grid is drawn by the Konva BackgroundLayer; this is
+     just the solid whiteboard / dark surface behind it. */
+  background: var(--canvas-bg);
 }
 
-.tool-palette {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 18px;
-  background: var(--glass-tint);
-  border: 1px solid var(--glass-stroke);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  box-shadow: var(--shadow-lg);
-  z-index: 5;
-}
-
-.tool-palette__row {
-  display: grid;
-  grid-template-columns: repeat(3, 36px);
-  gap: 6px;
-}
-
-.tool-palette__row--swatches,
-.tool-palette__row--sizes {
-  grid-template-columns: repeat(6, 1fr);
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.10);
-}
-
-.tool-palette__row--sizes {
-  grid-template-columns: repeat(4, 1fr);
-}
-
-.tool-palette__chip {
-  appearance: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  border: 1px solid transparent;
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--fg-0);
-  font-size: 16px;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  transition: background 150ms ease, border-color 150ms ease;
-}
-
-.tool-palette__chip:hover {
-  background: rgba(255, 255, 255, 0.10);
-}
-
-.tool-palette__chip--active {
-  background: rgba(90, 200, 250, 0.22);
-  border-color: rgba(90, 200, 250, 0.55);
-}
-
-.tool-palette__swatch {
-  appearance: none;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  cursor: pointer;
-  padding: 0;
-}
-
-.tool-palette__swatch--active {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
-.tool-palette__size {
-  appearance: none;
-  display: grid;
-  place-items: center;
-  height: 28px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  background: rgba(255, 255, 255, 0.05);
-  cursor: pointer;
-}
-
-.tool-palette__size span {
-  display: block;
-  background: var(--fg-0);
-  border-radius: 999px;
-}
-
-.tool-palette__size--active {
-  background: rgba(90, 200, 250, 0.22);
-  border-color: rgba(90, 200, 250, 0.55);
-}
+/* The left ToolPalette was replaced by the bottom Liquid Glass Dock in M7. */
 
 .selection-inspector {
   position: absolute;
@@ -317,7 +216,7 @@ a {
         #ff453a 56%,
         transparent 56%
       ),
-    rgba(0, 0, 0, 0.25);
+    var(--field-bg);
 }
 
 .selection-inspector__range {
@@ -327,7 +226,7 @@ a {
 
 .selection-inspector__num {
   width: 64px;
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--field-bg);
   border: 1px solid var(--glass-stroke);
   color: var(--fg-0);
   border-radius: 8px;
@@ -340,7 +239,7 @@ a {
   grid-template-columns: repeat(4, 1fr);
   gap: 6px;
   padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--glass-stroke);
 }
 
 .selection-inspector__btn {
@@ -348,7 +247,7 @@ a {
   height: 30px;
   border-radius: 8px;
   border: 1px solid transparent;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--field-bg);
   color: var(--fg-0);
   font-size: 15px;
   cursor: pointer;
@@ -358,13 +257,13 @@ a {
 }
 
 .selection-inspector__btn:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--glass-hover);
 }
 
 .selection-inspector__lock {
   appearance: none;
   border: 1px solid var(--glass-stroke);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--field-bg);
   color: var(--fg-0);
   border-radius: 999px;
   padding: 8px 12px;
@@ -374,7 +273,7 @@ a {
 }
 
 .selection-inspector__lock:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--glass-hover);
 }
 
 .selection-inspector__lock--on {

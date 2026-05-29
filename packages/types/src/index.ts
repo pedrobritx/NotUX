@@ -13,4 +13,5 @@ export type {
   YShape,
   YShapeKind,
   ToolKind,
+  StrokeStyle,
 } from "./yshape";
