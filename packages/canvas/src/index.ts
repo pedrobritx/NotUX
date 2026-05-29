@@ -7,5 +7,6 @@ export { useShapeStore } from "./store/shapeStore";
 export type { RealtimeConfig } from "./store/shapeStore";
 export { useToolStore } from "./store/toolStore";
 export type { ToolOptions } from "./store/toolStore";
+export { useAssetStore } from "./store/assetStore";
 export { DEFAULT_PAGE_ID } from "./store/pageStore";
 export type { ShapeStore } from "./store/shapeStore";
