@@ -1,12 +1,24 @@
 import * as Y from "yjs";
 import type { YShape } from "@notux/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { create } from "zustand";
 import {
   getBoardDoc,
   getIndexedDbProvider,
+  getSupabaseProvider,
+  getAwareness,
   findPageMap,
   getPageMap,
+  type Awareness,
 } from "@notux/sync";
+
+// Realtime collaboration config, injected by the web app before initBoard.
+// Absent (null) in local-only mode (no Supabase env), where the board still
+// works fully against IndexedDB.
+export interface RealtimeConfig {
+  client: SupabaseClient;
+  identity: { name: string; color: string };
+}
 
 // One promise per boardId — concurrent callers for the same board share the
 // same init sequence (handles React StrictMode double-invoke).
@@ -21,7 +33,15 @@ interface ShapeStoreState {
   lastSaved: Date | null;
   // The active Y.Doc (null until initBoard resolves).
   _doc: Y.Doc | null;
+  // Yjs awareness for presence/cursors, set during initBoard when realtime is
+  // configured. Null in local-only mode.
+  _awareness: Awareness | null;
+  // Realtime config stashed by configureRealtime, consumed by initBoard.
+  _realtimeConfig: RealtimeConfig | null;
   _bump(): void;
+
+  // Inject (or clear) realtime collaboration config. Call before initBoard.
+  configureRealtime(config: RealtimeConfig | null): void;
 
   // Must be called before any shape reads/writes. Idempotent per boardId.
   initBoard(boardId: string): Promise<void>;
@@ -108,9 +128,15 @@ export const useShapeStore = create<ShapeStoreState>((set, get) => ({
   synced: false,
   lastSaved: null,
   _doc: null,
+  _awareness: null,
+  _realtimeConfig: null,
 
   _bump() {
     set((s) => ({ revision: s.revision + 1 }));
+  },
+
+  configureRealtime(config) {
+    set({ _realtimeConfig: config });
   },
 
   initBoard(boardId) {
@@ -138,6 +164,20 @@ export const useShapeStore = create<ShapeStoreState>((set, get) => ({
       const provider = getIndexedDbProvider(boardId, doc);
       await provider.whenSynced;
       set({ synced: true });
+
+      // Attach realtime sync AFTER IndexedDB has loaded, so the sync handshake
+      // advertises a complete local state vector and exchanges only a minimal
+      // diff with peers. Skipped entirely in local-only mode.
+      const cfg = get()._realtimeConfig;
+      if (cfg) {
+        const awareness = getAwareness(boardId, doc);
+        awareness.setLocalStateField("user", {
+          name: cfg.identity.name,
+          color: cfg.identity.color,
+        });
+        getSupabaseProvider({ client: cfg.client, boardId, doc, awareness });
+        set({ _awareness: awareness });
+      }
     })();
 
     _initPromises.set(boardId, promise);

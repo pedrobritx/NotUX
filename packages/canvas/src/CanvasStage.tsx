@@ -3,9 +3,11 @@ import type { ToolKind, YShape } from "@notux/types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Stage } from "react-konva";
 import { newAuthorId } from "./ids";
+import { useAwareness } from "./hooks/useAwareness";
 import { useUndoManager } from "./hooks/useUndoManager";
 import { BackgroundLayer } from "./layers/BackgroundLayer";
 import { OverlayLayer } from "./layers/OverlayLayer";
+import { PresenceLayer } from "./layers/PresenceLayer";
 import { ShapesLayer } from "./layers/ShapesLayer";
 import { TransformLayer } from "./layers/TransformLayer";
 import { useDraftStore } from "./store/draftStore";
@@ -57,6 +59,24 @@ export function CanvasStage({ boardId: _boardId, pageId = DEFAULT_PAGE_ID }: Pro
   const [spaceHeld, setSpaceHeld] = useState(false);
 
   const { undo, redo } = useUndoManager(pageId);
+  const awareness = useAwareness();
+
+  // Publish the local cursor (world coords) to awareness, throttled to one
+  // update per animation frame so rapid pointer moves don't flood the channel.
+  const cursorRafRef = useRef<number | null>(null);
+  const pendingCursorRef = useRef<{ x: number; y: number } | null>(null);
+  const publishCursor = useCallback(
+    (world: { x: number; y: number }) => {
+      if (!awareness) return;
+      pendingCursorRef.current = world;
+      if (cursorRafRef.current !== null) return;
+      cursorRafRef.current = requestAnimationFrame(() => {
+        cursorRafRef.current = null;
+        awareness.setLocalStateField("cursor", pendingCursorRef.current);
+      });
+    },
+    [awareness],
+  );
 
   const tool = useToolStore((s) => s.tool);
   const selection = useToolStore((s) => s.selection);
@@ -209,6 +229,19 @@ export function CanvasStage({ boardId: _boardId, pageId = DEFAULT_PAGE_ID }: Pro
     };
   }, [buildToolContext, undo, redo, pageId]);
 
+  // Publish the local selection to awareness so peers can highlight it.
+  useEffect(() => {
+    awareness?.setLocalStateField("selection", Array.from(selection));
+  }, [awareness, selection]);
+
+  // Clear our presence when the canvas unmounts (navigate away from the board).
+  useEffect(() => {
+    return () => {
+      if (cursorRafRef.current !== null) cancelAnimationFrame(cursorRafRef.current);
+      awareness?.setLocalStateField("cursor", null);
+    };
+  }, [awareness]);
+
   const panRef = useRef<{ active: boolean; lastX: number; lastY: number }>({
     active: false,
     lastX: 0,
@@ -268,10 +301,21 @@ export function CanvasStage({ boardId: _boardId, pageId = DEFAULT_PAGE_ID }: Pro
         setViewport((v) => ({ ...v, x: v.x + dx, y: v.y + dy }));
         return;
       }
-      toolRef.current.onPointerMove(pointerToToolPoint(native), buildToolContext());
+      const point = pointerToToolPoint(native);
+      publishCursor({ x: point.x, y: point.y });
+      toolRef.current.onPointerMove(point, buildToolContext());
     },
-    [viewport, buildToolContext],
+    [viewport, buildToolContext, publishCursor],
   );
+
+  // Hide our cursor for peers when the pointer leaves the canvas.
+  const onPointerLeave = useCallback(() => {
+    if (cursorRafRef.current !== null) {
+      cancelAnimationFrame(cursorRafRef.current);
+      cursorRafRef.current = null;
+    }
+    awareness?.setLocalStateField("cursor", null);
+  }, [awareness]);
 
   const onPointerUp = useCallback(
     (evt: React.PointerEvent<HTMLDivElement>) => {
@@ -377,6 +421,7 @@ export function CanvasStage({ boardId: _boardId, pageId = DEFAULT_PAGE_ID }: Pro
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
+      onPointerLeave={onPointerLeave}
       onWheel={onWheel}
       onDoubleClick={onDoubleClick}
       onContextMenu={(e) => e.preventDefault()}
@@ -393,15 +438,8 @@ export function CanvasStage({ boardId: _boardId, pageId = DEFAULT_PAGE_ID }: Pro
       >
         <BackgroundLayer viewport={viewport} width={size.w} height={size.h} />
         <ShapesLayer ref={shapesLayerRef} shapes={shapes} selection={selection} />
-        {tool === "select" && (
-          <TransformLayer
-            selection={selection}
-            pageId={pageId}
-            revision={revision}
-            shapesLayerRef={shapesLayerRef}
-          />
-        )}
-        <OverlayLayer draft={draft} selectedShapes={overlayShapes} viewport={viewport} />
+        <OverlayLayer draft={draft} selectedShapes={selectedShapes} viewport={viewport} />
+        <PresenceLayer awareness={awareness} viewport={viewport} />
       </Stage>
       <TextEditorOverlay
         viewport={viewport}
