@@ -18,6 +18,18 @@ export interface DraftRect {
   h: number;
   stroke: string;
   fill: string | null;
+  // Corner radius for the rounded-square preview.
+  radius?: number;
+}
+
+export interface DraftPolygon {
+  variant: "diamond" | "triangle";
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  stroke: string;
+  fill: string | null;
 }
 
 export interface DraftLine {
@@ -27,18 +39,22 @@ export interface DraftLine {
   y2: number;
   stroke: string;
   width: number;
+  // Arrow routing for the preview (matches YArrow.variant).
+  variant?: "straight" | "curved" | "elbow";
 }
 
 interface DraftStoreState {
   stroke: DraftStroke | null;
   rect: DraftRect | null;
   ellipse: DraftRect | null;
+  polygon: DraftPolygon | null;
   line: DraftLine | null;
   arrow: DraftLine | null;
   marquee: { x: number; y: number; w: number; h: number } | null;
   setStroke(s: DraftStroke | null): void;
   setRect(r: DraftRect | null): void;
   setEllipse(r: DraftRect | null): void;
+  setPolygon(p: DraftPolygon | null): void;
   setLine(l: DraftLine | null): void;
   setArrow(l: DraftLine | null): void;
   setMarquee(m: { x: number; y: number; w: number; h: number } | null): void;
@@ -52,6 +68,7 @@ export const useDraftStore = create<DraftStoreState>((set) => ({
   stroke: null,
   rect: null,
   ellipse: null,
+  polygon: null,
   line: null,
   arrow: null,
   marquee: null,
@@ -63,6 +80,9 @@ export const useDraftStore = create<DraftStoreState>((set) => ({
   },
   setEllipse(r) {
     set({ ellipse: r });
+  },
+  setPolygon(p) {
+    set({ polygon: p });
   },
   setLine(l) {
     set({ line: l });
@@ -78,6 +98,7 @@ export const useDraftStore = create<DraftStoreState>((set) => ({
       stroke: null,
       rect: null,
       ellipse: null,
+      polygon: null,
       line: null,
       arrow: null,
       marquee: null,

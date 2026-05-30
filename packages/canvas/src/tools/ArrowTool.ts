@@ -9,9 +9,19 @@ export function makeArrowTool(): Tool {
     start: { x: 0, y: 0 },
   };
 
+  function variantOf(ctx: ToolContext): "straight" | "curved" | "elbow" {
+    const v = ctx.options.shapeVariant;
+    return v === "curved" || v === "elbow" ? v : "straight";
+  }
+
   function preview(end: { x: number; y: number }, shift: boolean, ctx: ToolContext) {
     const l = dragLine(state.start, end, shift);
-    ctx.draftStore.setArrow({ ...l, stroke: ctx.options.color, width: ctx.options.size });
+    ctx.draftStore.setArrow({
+      ...l,
+      stroke: ctx.options.color,
+      width: ctx.options.size,
+      variant: variantOf(ctx),
+    });
   }
 
   return {
@@ -37,6 +47,7 @@ export function makeArrowTool(): Tool {
         ...l,
         stroke: ctx.options.color,
         width: ctx.options.size,
+        variant: variantOf(ctx),
       };
       ctx.store.transact(() => ctx.store.addShape(ctx.pageId, shape));
     },

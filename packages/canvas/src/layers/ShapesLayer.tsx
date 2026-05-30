@@ -6,7 +6,9 @@ import { ArrowRenderer } from "../renderers/ArrowRenderer";
 import { AssetRefRenderer } from "../renderers/AssetRefRenderer";
 import { EllipseRenderer } from "../renderers/EllipseRenderer";
 import { LineRenderer } from "../renderers/LineRenderer";
+import { PolygonRenderer } from "../renderers/PolygonRenderer";
 import { RectRenderer } from "../renderers/RectRenderer";
+import { StickyRenderer } from "../renderers/StickyRenderer";
 import { StrokeRenderer } from "../renderers/StrokeRenderer";
 import { TextRenderer } from "../renderers/TextRenderer";
 
@@ -23,12 +25,16 @@ function renderShape(shape: YShape, selected: boolean) {
       return <RectRenderer shape={shape} selected={selected} />;
     case "ellipse":
       return <EllipseRenderer shape={shape} selected={selected} />;
+    case "polygon":
+      return <PolygonRenderer shape={shape} selected={selected} />;
     case "line":
       return <LineRenderer shape={shape} selected={selected} />;
     case "arrow":
       return <ArrowRenderer shape={shape} selected={selected} />;
     case "text":
       return <TextRenderer shape={shape} selected={selected} />;
+    case "sticky":
+      return <StickyRenderer shape={shape} selected={selected} />;
     case "asset":
       return <AssetRefRenderer shape={shape} selected={selected} />;
   }
@@ -45,7 +51,9 @@ function groupTransform(shape: YShape): {
   switch (shape.kind) {
     case "rect":
     case "ellipse":
+    case "polygon":
     case "text":
+    case "sticky":
     case "asset":
       return { x: shape.x, y: shape.y, rotation: shape.rot ?? 0 };
     default:

@@ -9,6 +9,15 @@ export interface ToolOptions {
   opacity: number;
   // Instrument variant the active tool draws with (pen by default).
   style: StrokeStyle;
+  // Sub-variant for the shape family, interpreted per-tool:
+  //   rect    → "rounded" draws a rounded square
+  //   polygon → "diamond" | "triangle"
+  //   arrow   → "straight" | "curved" | "elbow"
+  shapeVariant?: string;
+  // Eraser behaviour: delete whole objects, or trim/split strokes under the tip.
+  eraserMode: "object" | "area";
+  // Fill color for new sticky notes (kept separate from the ink `color`).
+  stickyColor: string;
 }
 
 interface ToolStoreState {
@@ -34,6 +43,9 @@ const DEFAULT_OPTIONS: ToolOptions = {
   fill: null,
   opacity: 1,
   style: "pen",
+  shapeVariant: undefined,
+  eraserMode: "object",
+  stickyColor: "#ffe066",
 };
 
 export const useToolStore = create<ToolStoreState>((set) => ({

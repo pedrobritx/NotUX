@@ -13,3 +13,6 @@ export { Swatch } from "./components/Swatch";
 
 export { Instrument, INSTRUMENT_KINDS } from "./instruments/Instrument";
 export type { InstrumentKind } from "./instruments/Instrument";
+
+export { Icon } from "./icons/Icon";
+export type { IconName } from "./icons/Icon";

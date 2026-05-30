@@ -2,6 +2,8 @@ import type { YShape } from "@notux/types";
 import { Arrow, Ellipse, Layer, Line, Rect } from "react-konva";
 import type { DraftStore } from "../store/draftStore";
 import { strokeOutline } from "../renderers/strokeGeometry";
+import { arrowPoints } from "../renderers/ArrowRenderer";
+import { polygonPoints } from "../renderers/PolygonRenderer";
 import { shapeBounds } from "../tools/shapeOps";
 import { cssVar } from "../theme/cssVar";
 import type { ViewportState } from "../viewport/Viewport";
@@ -9,7 +11,7 @@ import type { ViewportState } from "../viewport/Viewport";
 interface Props {
   draft: Pick<
     DraftStore,
-    "stroke" | "rect" | "ellipse" | "line" | "arrow" | "marquee"
+    "stroke" | "rect" | "ellipse" | "polygon" | "line" | "arrow" | "marquee"
   >;
   selectedShapes: YShape[];
   viewport: ViewportState;
@@ -50,9 +52,28 @@ export function OverlayLayer({ draft, selectedShapes, viewport }: Props) {
           y={draft.rect.y}
           width={draft.rect.w}
           height={draft.rect.h}
+          cornerRadius={draft.rect.radius ?? 0}
           stroke={draft.rect.stroke}
           fill={draft.rect.fill ?? undefined}
           strokeWidth={2}
+          dash={[6 / viewport.scale, 4 / viewport.scale]}
+        />
+      )}
+
+      {draft.polygon && (
+        <Line
+          x={draft.polygon.x}
+          y={draft.polygon.y}
+          points={polygonPoints(
+            draft.polygon.variant,
+            draft.polygon.w,
+            draft.polygon.h,
+          )}
+          closed
+          stroke={draft.polygon.stroke}
+          fill={draft.polygon.fill ?? undefined}
+          strokeWidth={2}
+          lineJoin="round"
           dash={[6 / viewport.scale, 4 / viewport.scale]}
         />
       )}
@@ -79,17 +100,33 @@ export function OverlayLayer({ draft, selectedShapes, viewport }: Props) {
         />
       )}
 
-      {draft.arrow && (
-        <Arrow
-          points={[draft.arrow.x1, draft.arrow.y1, draft.arrow.x2, draft.arrow.y2]}
-          stroke={draft.arrow.stroke}
-          fill={draft.arrow.stroke}
-          strokeWidth={draft.arrow.width}
-          pointerLength={Math.max(8, draft.arrow.width * 3)}
-          pointerWidth={Math.max(8, draft.arrow.width * 3)}
-          lineCap="round"
-        />
-      )}
+      {draft.arrow && (() => {
+        const { points, tension } = arrowPoints({
+          kind: "arrow",
+          id: "draft",
+          author: "",
+          x1: draft.arrow.x1,
+          y1: draft.arrow.y1,
+          x2: draft.arrow.x2,
+          y2: draft.arrow.y2,
+          stroke: draft.arrow.stroke,
+          width: draft.arrow.width,
+          variant: draft.arrow.variant,
+        });
+        return (
+          <Arrow
+            points={points}
+            tension={tension}
+            stroke={draft.arrow.stroke}
+            fill={draft.arrow.stroke}
+            strokeWidth={draft.arrow.width}
+            pointerLength={Math.max(8, draft.arrow.width * 3)}
+            pointerWidth={Math.max(8, draft.arrow.width * 3)}
+            lineCap="round"
+            lineJoin="round"
+          />
+        );
+      })()}
 
       {draft.marquee && (
         <Rect

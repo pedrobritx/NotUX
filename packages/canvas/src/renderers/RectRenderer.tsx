@@ -15,6 +15,7 @@ export function RectRenderer({ shape, selected }: Props) {
       y={0}
       width={shape.w}
       height={shape.h}
+      cornerRadius={shape.radius ?? 0}
       stroke={shape.stroke}
       strokeWidth={2}
       fill={shape.fill ?? undefined}

@@ -4,9 +4,12 @@ export type ToolKind =
   | "eraser"
   | "rect"
   | "ellipse"
+  | "polygon"
   | "line"
   | "arrow"
   | "text"
+  | "sticky"
+  | "hand"
   | "select";
 
 // Visual variant of a freehand stroke. The canvas/tool discriminator stays
@@ -51,6 +54,23 @@ export interface YRect extends YShapeBase {
   rot: number;
   stroke: string;
   fill: string | null;
+  // Corner radius in world units. undefined / 0 renders a sharp rectangle;
+  // the "rounded square" shape sets this.
+  radius?: number;
+}
+
+// Diamond and triangle share the drag-out box geometry of YRect; the `variant`
+// picks which polygon is inscribed in the x/y/w/h box.
+export interface YPolygon extends YShapeBase {
+  kind: "polygon";
+  variant: "diamond" | "triangle";
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  rot: number;
+  stroke: string;
+  fill: string | null;
 }
 
 export interface YEllipse extends YShapeBase {
@@ -82,6 +102,8 @@ export interface YArrow extends YShapeBase {
   y2: number;
   stroke: string;
   width: number;
+  // Routing between the endpoints. undefined renders straight (back-compat).
+  variant?: "straight" | "curved" | "elbow";
 }
 
 export interface YText extends YShapeBase {
@@ -95,6 +117,18 @@ export interface YText extends YShapeBase {
   font: string;
   size: number;
   color: string;
+}
+
+export interface YSticky extends YShapeBase {
+  kind: "sticky";
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  rot?: number;
+  color: string;
+  content: string;
+  fontSize?: number;
 }
 
 export interface YAssetRef extends YShapeBase {
@@ -112,9 +146,11 @@ export type YShape =
   | YStroke
   | YRect
   | YEllipse
+  | YPolygon
   | YLine
   | YArrow
   | YText
+  | YSticky
   | YAssetRef;
 
 export type YShapeKind = YShape["kind"];

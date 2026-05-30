@@ -1,5 +1,5 @@
 import { useMemo, useState, type RefObject } from "react";
-import { Segmented, Sheet, Slider, Swatch } from "@notux/ui";
+import { Icon, Segmented, Sheet, Slider, Swatch } from "@notux/ui";
 import { useDockStore } from "@notux/canvas";
 import { useSavedSwatches } from "./useSavedSwatches";
 
@@ -106,7 +106,7 @@ export function ColorPicker({ open, onClose, anchorRef }: Props) {
               aria-label="Pick color from screen"
               title="Pick color from screen"
             >
-              ⊙
+              <Icon name="eyedropper" size={18} />
             </button>
           ) : (
             <span />
@@ -118,7 +118,7 @@ export function ColorPicker({ open, onClose, anchorRef }: Props) {
             onClick={onClose}
             aria-label="Close color picker"
           >
-            ✕
+            <Icon name="close" size={16} />
           </button>
         </div>
 
@@ -219,7 +219,7 @@ export function ColorPicker({ open, onClose, anchorRef }: Props) {
               aria-label="Save current color"
               title="Save current color"
             >
-              ＋
+              <Icon name="plus" size={16} />
             </button>
           </div>
         </div>
