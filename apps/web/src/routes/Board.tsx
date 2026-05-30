@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import {
   CanvasStage,
   useAssetStore,
@@ -7,8 +7,8 @@ import {
   useShapeStore,
 } from "@notux/canvas";
 import { useTheme } from "@notux/ui";
+import { AppMenu } from "../features/canvas/AppMenu";
 import { Dock } from "../features/canvas/Dock";
-import { PageNavigator } from "../features/canvas/PageNavigator";
 import { SaveStatus } from "../features/canvas/SaveStatus";
 import { SelectionInspector } from "../features/canvas/SelectionInspector";
 import { useIdentity } from "../features/canvas/useIdentity";
@@ -71,13 +71,10 @@ export default function Board() {
   return (
     <div className="board">
       <CanvasStage boardId={boardId!} pageId={activePageId} theme={theme} />
-      <PageNavigator />
+      <AppMenu />
       <Dock />
       <SelectionInspector pageId={activePageId} />
       <SaveStatus />
-      <Link className="board__home-link" to="/">
-        ← Home
-      </Link>
     </div>
   );
 }

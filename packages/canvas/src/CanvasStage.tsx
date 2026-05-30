@@ -11,6 +11,7 @@ import { PresenceLayer } from "./layers/PresenceLayer";
 import { ShapesLayer } from "./layers/ShapesLayer";
 import { TransformLayer } from "./layers/TransformLayer";
 import { useAssetStore } from "./store/assetStore";
+import { useCommandStore } from "./store/commandStore";
 import { useDraftStore } from "./store/draftStore";
 import { DEFAULT_PAGE_ID } from "./store/pageStore";
 import { useShapeStore } from "./store/shapeStore";
@@ -37,6 +38,8 @@ function toolCursor(tool: ToolKind): string {
   switch (tool) {
     case "select":
       return "default";
+    case "hand":
+      return "grab";
     case "text":
       return "text";
     case "eraser":
@@ -66,8 +69,28 @@ export function CanvasStage({
   const [viewport, setViewport] = useState({ x: 0, y: 0, scale: 1 });
   const [spaceHeld, setSpaceHeld] = useState(false);
 
-  const { undo, redo } = useUndoManager(pageId);
+  const { undo, redo, canUndo, canRedo } = useUndoManager(pageId);
   const awareness = useAwareness();
+
+  // Register undo/redo + zoom so the app menu (outside the canvas) can drive
+  // them. Re-registers when handlers or canvas size change.
+  const sizeRef = useRef(size);
+  sizeRef.current = size;
+  useEffect(() => {
+    const zoomBy = (factor: number) =>
+      setViewport((v) =>
+        zoomAt(v, sizeRef.current.w / 2, sizeRef.current.h / 2, v.scale * factor),
+      );
+    useCommandStore.getState().register({
+      undo,
+      redo,
+      canUndo,
+      canRedo,
+      zoomIn: () => zoomBy(1.2),
+      zoomOut: () => zoomBy(1 / 1.2),
+      zoomReset: () => setViewport((v) => ({ ...v, scale: 1 })),
+    });
+  }, [undo, redo, canUndo, canRedo]);
 
   // Publish the local cursor (world coords) to awareness, throttled to one
   // update per animation frame so rapid pointer moves don't flood the channel.
@@ -284,7 +307,7 @@ export function CanvasStage({
   const onPointerDown = useCallback(
     (evt: React.PointerEvent<HTMLDivElement>) => {
       const native = evt.nativeEvent;
-      if (native.button === 1 || spaceHeld) {
+      if (native.button === 1 || spaceHeld || tool === "hand") {
         evt.preventDefault();
         panRef.current = { active: true, lastX: native.clientX, lastY: native.clientY };
         evt.currentTarget.setPointerCapture(native.pointerId);
@@ -307,7 +330,7 @@ export function CanvasStage({
       evt.currentTarget.setPointerCapture(native.pointerId);
       toolRef.current.onPointerDown(pointerToToolPoint(native), buildToolContext());
     },
-    [spaceHeld, viewport, buildToolContext],
+    [spaceHeld, tool, viewport, buildToolContext],
   );
 
   const onPointerMove = useCallback(
@@ -423,6 +446,18 @@ export function CanvasStage({
           font: hit.font,
           size: hit.size,
           color: hit.color,
+        });
+      } else if (hit && hit.kind === "sticky" && !hit.locked) {
+        const pad = 14;
+        useTextEditStore.getState().begin({
+          editingId: hit.id,
+          worldX: hit.x + pad,
+          worldY: hit.y + pad,
+          width: Math.max(40, hit.w - pad * 2),
+          initial: hit.content,
+          font: "-apple-system, system-ui, sans-serif",
+          size: hit.fontSize ?? 18,
+          color: "#1c1c1e",
         });
       }
     },

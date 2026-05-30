@@ -12,11 +12,13 @@ function shapeColor(s: YShape): string | undefined {
   switch (s.kind) {
     case "rect":
     case "ellipse":
+    case "polygon":
     case "line":
     case "arrow":
       return s.stroke;
     case "text":
     case "stroke":
+    case "sticky":
       return s.color;
     case "asset":
       return undefined;
@@ -27,11 +29,13 @@ function colorPatch(s: YShape, color: string): Partial<YShape> | null {
   switch (s.kind) {
     case "rect":
     case "ellipse":
+    case "polygon":
     case "line":
     case "arrow":
       return { stroke: color };
     case "text":
     case "stroke":
+    case "sticky":
       return { color };
     case "asset":
       return null;
@@ -84,7 +88,8 @@ export function SelectionInspector({ pageId }: Props) {
     });
   }
 
-  const isFillKind = (s: YShape) => s.kind === "rect" || s.kind === "ellipse";
+  const isFillKind = (s: YShape) =>
+    s.kind === "rect" || s.kind === "ellipse" || s.kind === "polygon";
   const hasColor = selected.some((s) => shapeColor(s) !== undefined);
   const fillShapes = selected.filter(isFillKind);
   const textShapes = selected.filter((s) => s.kind === "text");
