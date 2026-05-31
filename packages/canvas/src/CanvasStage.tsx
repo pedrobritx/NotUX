@@ -18,6 +18,7 @@ import { useShapeStore } from "./store/shapeStore";
 import { useTextEditStore } from "./store/textEditStore";
 import { useToolStore } from "./store/toolStore";
 import { TextEditorOverlay } from "./TextEditorOverlay";
+import { MediaOverlayLayer } from "./MediaOverlayLayer";
 import { makeTool } from "./tools/registry";
 import { boundsIntersect, shapeBounds } from "./tools/shapeOps";
 import type { Tool, ToolContext, ToolEventPoint } from "./tools/types";
@@ -523,6 +524,11 @@ export function CanvasStage({
         <OverlayLayer draft={draft} selectedShapes={selectedShapes} viewport={viewport} />
         <PresenceLayer awareness={awareness} viewport={viewport} />
       </Stage>
+      <MediaOverlayLayer
+        shapes={shapes}
+        selection={selection}
+        viewport={viewport}
+      />
       <TextEditorOverlay
         viewport={viewport}
         pageId={pageId}

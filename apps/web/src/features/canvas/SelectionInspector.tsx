@@ -21,6 +21,7 @@ function shapeColor(s: YShape): string | undefined {
     case "sticky":
       return s.color;
     case "asset":
+    case "embed":
       return undefined;
   }
 }
@@ -38,6 +39,7 @@ function colorPatch(s: YShape, color: string): Partial<YShape> | null {
     case "sticky":
       return { color };
     case "asset":
+    case "embed":
       return null;
   }
 }

@@ -73,6 +73,9 @@ export function AppMenu({ boardId, client, owned }: AppMenuProps) {
   const [pagesOpen, setPagesOpen] = useState(false);
   const [snapshotsOpen, setSnapshotsOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [embedOpen, setEmbedOpen] = useState(false);
+  const [embedUrl, setEmbedUrl] = useState("");
+  const [embedError, setEmbedError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
@@ -139,6 +142,17 @@ export function AppMenu({ boardId, client, owned }: AppMenuProps) {
     } finally {
       setExporting(false);
     }
+  }
+
+  function submitEmbed() {
+    const err = useAssetStore.getState().insertEmbed(embedUrl);
+    if (err) {
+      setEmbedError(err);
+      return;
+    }
+    setEmbedUrl("");
+    setEmbedError(null);
+    setEmbedOpen(false);
   }
 
   function commitDrop() {
@@ -212,9 +226,19 @@ export function AppMenu({ boardId, client, owned }: AppMenuProps) {
             />
             <MenuItem
               icon="upload"
-              label="Import image or PDF"
+              label="Import image, PDF or audio"
               disabled={!canImport}
               onClick={() => run(() => fileRef.current?.click())}
+            />
+            <MenuItem
+              icon="plus"
+              label="Embed YouTube / Google Drive…"
+              disabled={!canImport}
+              onClick={() => {
+                setMenuOpen(false);
+                setEmbedError(null);
+                setEmbedOpen(true);
+              }}
             />
             <MenuItem
               icon="download"
@@ -382,6 +406,59 @@ export function AppMenu({ boardId, client, owned }: AppMenuProps) {
         </div>
       </Popover>
 
+      {/* Embed-by-URL (YouTube / Google Drive) */}
+      <Popover
+        open={embedOpen}
+        onClose={() => setEmbedOpen(false)}
+        anchorRef={menuBtnRef}
+        placement="bottom"
+        className="menu-popover"
+      >
+        <div className="menu" style={{ padding: 12, minWidth: 280 }}>
+          <div className="menu__section-title">Embed a link</div>
+          <input
+            type="url"
+            value={embedUrl}
+            autoFocus
+            placeholder="Paste a YouTube or Google Drive URL"
+            onChange={(e) => {
+              setEmbedUrl(e.target.value);
+              if (embedError) setEmbedError(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") submitEmbed();
+            }}
+            style={{
+              width: "100%",
+              boxSizing: "border-box",
+              padding: "8px 10px",
+              borderRadius: 8,
+              border: "1px solid rgba(255,255,255,0.18)",
+              background: "rgba(0,0,0,0.25)",
+              color: "inherit",
+              outline: "none",
+              marginTop: 6,
+            }}
+          />
+          {embedError && (
+            <div style={{ color: "#ff6b6b", fontSize: 12, marginTop: 6 }}>
+              {embedError}
+            </div>
+          )}
+          <div style={{ fontSize: 11, opacity: 0.6, marginTop: 6 }}>
+            Google Drive files must be shared “anyone with the link”.
+          </div>
+          <button
+            type="button"
+            className="menu__item"
+            style={{ justifyContent: "center", marginTop: 8 }}
+            onClick={submitEmbed}
+          >
+            <span className="menu__item-label">Add to board</span>
+          </button>
+        </div>
+      </Popover>
+
       <SnapshotsPanel
         open={snapshotsOpen}
         onClose={() => setSnapshotsOpen(false)}
@@ -394,7 +471,7 @@ export function AppMenu({ boardId, client, owned }: AppMenuProps) {
       <input
         ref={fileRef}
         type="file"
-        accept="image/*,application/pdf"
+        accept="image/*,application/pdf,audio/*"
         multiple
         style={{ display: "none" }}
         onChange={(e) => {

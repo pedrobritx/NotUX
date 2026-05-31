@@ -18,7 +18,11 @@ interface Props {
 // show the dashed OverlayLayer box instead.
 function isTransformable(kind: YShape["kind"]): boolean {
   return (
-    kind === "rect" || kind === "ellipse" || kind === "text" || kind === "asset"
+    kind === "rect" ||
+    kind === "ellipse" ||
+    kind === "text" ||
+    kind === "asset" ||
+    kind === "embed"
   );
 }
 
@@ -66,7 +70,8 @@ export function TransformLayer({
           shape.kind === "rect" ||
           shape.kind === "ellipse" ||
           shape.kind === "text" ||
-          shape.kind === "asset"
+          shape.kind === "asset" ||
+          shape.kind === "embed"
         ) {
           const w = Math.max(1, shape.w * node.scaleX());
           const h = Math.max(1, shape.h * node.scaleY());

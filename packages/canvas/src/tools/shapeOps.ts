@@ -37,6 +37,7 @@ export function shapeBounds(shape: YShape): Bounds {
     case "text":
     case "sticky":
     case "asset":
+    case "embed":
       return { x: shape.x, y: shape.y, w: shape.w, h: shape.h };
     case "line":
     case "arrow": {
@@ -72,6 +73,7 @@ export function translateShape(shape: YShape, dx: number, dy: number): YShape {
     case "text":
     case "sticky":
     case "asset":
+    case "embed":
       return { ...shape, x: shape.x + dx, y: shape.y + dy };
     case "line":
     case "arrow":

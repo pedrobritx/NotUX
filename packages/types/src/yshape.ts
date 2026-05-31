@@ -142,6 +142,25 @@ export interface YAssetRef extends YShapeBase {
   rot: number;
 }
 
+// Audio/video resource placed on the board. Rendered as a selectable Konva card
+// (EmbedRenderer) with a live HTML player floated on top (MediaOverlayLayer),
+// since Konva's <canvas> can't host <audio>/<iframe>.
+//   - "audio":   uploaded file. `assetId` points at Storage (AssetKind "audio").
+//   - "youtube": `url` is a youtube.com/embed/<id> URL.
+//   - "gdrive":  `url` is a drive.google.com/file/d/<id>/preview URL.
+export interface YEmbed extends YShapeBase {
+  kind: "embed";
+  embedType: "audio" | "youtube" | "gdrive";
+  assetId?: string;
+  url?: string;
+  title: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  rot: number;
+}
+
 export type YShape =
   | YStroke
   | YRect
@@ -151,6 +170,7 @@ export type YShape =
   | YArrow
   | YText
   | YSticky
-  | YAssetRef;
+  | YAssetRef
+  | YEmbed;
 
 export type YShapeKind = YShape["kind"];

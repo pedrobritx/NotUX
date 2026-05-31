@@ -26,6 +26,18 @@ export async function uploadAsset(
   if (error) throw error;
 }
 
+// Public URL for an asset's bytes, suitable for a direct <audio src>. The
+// board-assets bucket is public (0002 migration), so no signing is needed.
+export function assetPublicUrl(
+  client: SupabaseClient,
+  boardId: string,
+  assetId: string,
+): string {
+  return client.storage
+    .from(BOARD_ASSETS_BUCKET)
+    .getPublicUrl(assetPath(boardId, assetId)).data.publicUrl;
+}
+
 export async function downloadAssetBlob(
   client: SupabaseClient,
   boardId: string,
