@@ -69,7 +69,7 @@ export function CanvasStage({
   const [viewport, setViewport] = useState({ x: 0, y: 0, scale: 1 });
   const [spaceHeld, setSpaceHeld] = useState(false);
 
-  const { undo, redo, canUndo, canRedo } = useUndoManager(pageId);
+  const { undo, redo, canUndo, canRedo } = useUndoManager();
   const awareness = useAwareness();
 
   // Register undo/redo + zoom so the app menu (outside the canvas) can drive

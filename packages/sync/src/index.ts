@@ -18,4 +18,6 @@ export {
 } from "./supabaseProvider";
 export type { SupabaseProviderOptions } from "./supabaseProvider";
 export { colorForSeed } from "./identity";
+export { LOCAL_ORIGIN } from "./origin";
+export { encodeSnapshot, restoreSnapshot } from "./snapshots";
 export { Awareness } from "y-protocols/awareness";

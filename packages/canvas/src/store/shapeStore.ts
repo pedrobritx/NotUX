@@ -9,6 +9,7 @@ import {
   getAwareness,
   findPageMap,
   getPageMap,
+  LOCAL_ORIGIN,
   type Awareness,
 } from "@notux/sync";
 
@@ -207,7 +208,7 @@ export const useShapeStore = create<ShapeStoreState>((set, get) => ({
     const doc = get()._doc;
     if (!doc) return;
     const pageMap = getPageMap(doc, pageId);
-    doc.transact(() => pageMap.set(shape.id, shape));
+    doc.transact(() => pageMap.set(shape.id, shape), LOCAL_ORIGIN);
   },
 
   updateShape(pageId, id, patch) {
@@ -219,8 +220,9 @@ export const useShapeStore = create<ShapeStoreState>((set, get) => ({
     if (!prev) return;
     // Casting through unknown: Partial<YShape> across a discriminated union is
     // wider than any single variant — callers pass kind-compatible patches.
-    doc.transact(() =>
-      pageMap.set(id, { ...prev, ...patch } as unknown as YShape),
+    doc.transact(
+      () => pageMap.set(id, { ...prev, ...patch } as unknown as YShape),
+      LOCAL_ORIGIN,
     );
   },
 
@@ -229,7 +231,7 @@ export const useShapeStore = create<ShapeStoreState>((set, get) => ({
     if (!doc) return;
     const pageMap = findPageMap(doc, pageId);
     if (!pageMap) return;
-    doc.transact(() => pageMap.delete(id));
+    doc.transact(() => pageMap.delete(id), LOCAL_ORIGIN);
   },
 
   deleteShapes(pageId, ids) {
@@ -239,7 +241,7 @@ export const useShapeStore = create<ShapeStoreState>((set, get) => ({
     if (!pageMap) return;
     doc.transact(() => {
       for (const id of ids) pageMap.delete(id);
-    });
+    }, LOCAL_ORIGIN);
   },
 
   transact(fn) {
@@ -248,7 +250,7 @@ export const useShapeStore = create<ShapeStoreState>((set, get) => ({
       fn();
       return;
     }
-    doc.transact(fn);
+    doc.transact(fn, LOCAL_ORIGIN);
   },
 
   setLocked(pageId, id, locked) {

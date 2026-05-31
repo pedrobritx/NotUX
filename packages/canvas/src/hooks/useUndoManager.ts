@@ -1,9 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as Y from "yjs";
-import { getPageMap } from "@notux/sync";
+import { LOCAL_ORIGIN } from "@notux/sync";
 import { useShapeStore } from "../store/shapeStore";
 
-export function useUndoManager(pageId: string): {
+// Board-wide, per-user undo. One UndoManager tracks the two top-level board
+// containers — the per-page shape maps (getMap("pages")) and the ordered page
+// list (getArray("pageList")) — so shape edits on every page AND page-list
+// operations share a single history that survives page switches. (A Y.UndoManager
+// tracking a parent Y.Map also captures changes to the Y.Maps nested inside it.)
+//
+// trackedOrigins is exactly { LOCAL_ORIGIN }: every user-initiated mutation
+// transacts with that origin (see shapeStore + pageList), while remote edits
+// (SupabaseProvider instance), IndexedDB hydration (its provider), and the seed
+// page (null) carry other origins and are never captured — making undo strictly
+// per-user in multiplayer. captureTimeout coalesces rapid same-origin writes
+// (e.g. a drag emitting many updates) into one undo step.
+export function useUndoManager(): {
   undo(): void;
   redo(): void;
   canUndo: boolean;
@@ -17,8 +29,10 @@ export function useUndoManager(pageId: string): {
   useEffect(() => {
     if (!doc) return;
 
-    const pageMap = getPageMap(doc, pageId);
-    const manager = new Y.UndoManager(pageMap);
+    const manager = new Y.UndoManager(
+      [doc.getMap("pages"), doc.getArray("pageList")],
+      { trackedOrigins: new Set([LOCAL_ORIGIN]), captureTimeout: 300 },
+    );
     managerRef.current = manager;
 
     function update() {
@@ -39,7 +53,7 @@ export function useUndoManager(pageId: string): {
       setCanUndo(false);
       setCanRedo(false);
     };
-  }, [doc, pageId]);
+  }, [doc]);
 
   const undo = useCallback(() => managerRef.current?.undo(), []);
   const redo = useCallback(() => managerRef.current?.redo(), []);
