@@ -1,8 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Asset, AssetKind } from "@notux/types";
+import type { Asset, AssetKind, YEmbed } from "@notux/types";
 import { create } from "zustand";
-import { newAssetId } from "../ids";
+import { newAssetId, newShapeId } from "../ids";
 import { uploadAsset, assetPath } from "../assets/storage";
+import { parseEmbedUrl } from "../assets/embeds";
+import { useShapeStore } from "./shapeStore";
+import { useToolStore } from "./toolStore";
 import { screenToWorld, type ViewportState } from "../viewport/Viewport";
 
 export interface AssetDecoded {
@@ -37,7 +40,16 @@ interface AssetStoreState {
   importAt(files: FileList | File[], world: { x: number; y: number }): Promise<void>;
   // Import via the toolbar button: place at the current viewport centre.
   importAtCenter(files: FileList | File[]): Promise<void>;
+  // Insert a YouTube/Google Drive embed from a pasted URL at the viewport
+  // centre. Returns an error message when the URL can't be parsed, else null.
+  insertEmbed(rawUrl: string): string | null;
 }
+
+// Default card sizes (world units) per embed provider.
+const YT_EMBED_W = 480;
+const YT_EMBED_H = 270; // 16:9
+const DRIVE_EMBED_W = 420;
+const DRIVE_EMBED_H = 120;
 
 export const useAssetStore = create<AssetStoreState>((set, get) => ({
   _boardId: null,
@@ -107,5 +119,36 @@ export const useAssetStore = create<AssetStoreState>((set, get) => ({
       canvas.size.h / 2,
     );
     await get().importAt(files, world);
+  },
+
+  insertEmbed(rawUrl) {
+    const canvas = get()._canvas;
+    if (!canvas) return "Canvas is not ready";
+    const parsed = parseEmbedUrl(rawUrl);
+    if (!parsed) return "Unrecognised URL — paste a YouTube or Google Drive link";
+    const world = screenToWorld(
+      canvas.viewport,
+      canvas.size.w / 2,
+      canvas.size.h / 2,
+    );
+    const w = parsed.embedType === "youtube" ? YT_EMBED_W : DRIVE_EMBED_W;
+    const h = parsed.embedType === "youtube" ? YT_EMBED_H : DRIVE_EMBED_H;
+    const shape: YEmbed = {
+      id: newShapeId(),
+      author: canvas.authorId,
+      kind: "embed",
+      embedType: parsed.embedType,
+      url: parsed.url,
+      title: parsed.embedType === "youtube" ? "YouTube" : "Google Drive",
+      x: world.x - w / 2,
+      y: world.y - h / 2,
+      w,
+      h,
+      rot: 0,
+    };
+    const store = useShapeStore.getState();
+    store.transact(() => store.addShape(canvas.pageId, shape));
+    useToolStore.getState().setSelection([shape.id]);
+    return null;
   },
 }));

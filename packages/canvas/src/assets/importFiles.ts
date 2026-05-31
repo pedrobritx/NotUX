@@ -1,4 +1,4 @@
-import type { YAssetRef, AssetKind } from "@notux/types";
+import type { YAssetRef, YEmbed, YShape, AssetKind } from "@notux/types";
 import { newShapeId } from "../ids";
 import { useShapeStore } from "../store/shapeStore";
 import { useToolStore } from "../store/toolStore";
@@ -15,6 +15,8 @@ const MAX_IMAGE_SIZE = 640; // world units, longest side of a placed image
 const PDF_CELL_W = 360; // world units, grid cell width per page
 const PDF_GRID_GAP = 24; // world units between cells / stacked imports
 const PDF_GRID_COLS = 4;
+const AUDIO_CARD_W = 320; // world units, default audio player card
+const AUDIO_CARD_H = 96;
 
 export interface ImportResult {
   created: string[];
@@ -24,6 +26,7 @@ export interface ImportResult {
 function classify(file: File): AssetKind | null {
   if (file.type === "application/pdf") return "pdf";
   if (file.type.startsWith("image/")) return "image";
+  if (file.type.startsWith("audio/")) return "audio";
   return null;
 }
 
@@ -81,6 +84,28 @@ function makeShape(
   };
 }
 
+function makeAudioEmbed(
+  authorId: string,
+  assetId: string,
+  title: string,
+  x: number,
+  y: number,
+): YEmbed {
+  return {
+    id: newShapeId(),
+    author: authorId,
+    kind: "embed",
+    embedType: "audio",
+    assetId,
+    title,
+    x,
+    y,
+    w: AUDIO_CARD_W,
+    h: AUDIO_CARD_H,
+    rot: 0,
+  };
+}
+
 // Import images and PDFs at `world` (a drop point, or the viewport centre for
 // the toolbar button). Images become one shape; a PDF becomes one shape per
 // page laid out in a grid. All shapes are committed in a single transaction so
@@ -94,7 +119,7 @@ export async function importFiles(
   const list = Array.from(files);
   const assetStore = useAssetStore.getState();
   const errors: ImportResult["errors"] = [];
-  const shapes: YAssetRef[] = [];
+  const shapes: YShape[] = [];
   let originY = world.y; // advances so multiple files don't stack exactly
 
   for (const file of list) {
@@ -108,7 +133,24 @@ export async function importFiles(
       continue;
     }
     try {
-      if (kind === "image") {
+      if (kind === "audio") {
+        // No decoding: upload bytes and place a player card. The HTML overlay
+        // resolves the public URL from the assetId at render time.
+        const asset = await assetStore.ingest(file, {
+          kind: "audio",
+          pageCount: null,
+        });
+        shapes.push(
+          makeAudioEmbed(
+            authorId,
+            asset.id,
+            file.name,
+            world.x - AUDIO_CARD_W / 2,
+            originY - AUDIO_CARD_H / 2,
+          ),
+        );
+        originY += AUDIO_CARD_H + PDF_GRID_GAP;
+      } else if (kind === "image") {
         const dec = await decodeImageFile(file);
         const asset = await assetStore.ingest(file, {
           kind: "image",

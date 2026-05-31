@@ -12,6 +12,7 @@ export type {
   YText,
   YSticky,
   YAssetRef,
+  YEmbed,
   YShape,
   YShapeKind,
   ToolKind,

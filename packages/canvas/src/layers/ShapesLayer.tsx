@@ -4,6 +4,7 @@ import { Group, Layer } from "react-konva";
 import type Konva from "konva";
 import { ArrowRenderer } from "../renderers/ArrowRenderer";
 import { AssetRefRenderer } from "../renderers/AssetRefRenderer";
+import { EmbedRenderer } from "../renderers/EmbedRenderer";
 import { EllipseRenderer } from "../renderers/EllipseRenderer";
 import { LineRenderer } from "../renderers/LineRenderer";
 import { PolygonRenderer } from "../renderers/PolygonRenderer";
@@ -37,6 +38,8 @@ function renderShape(shape: YShape, selected: boolean) {
       return <StickyRenderer shape={shape} selected={selected} />;
     case "asset":
       return <AssetRefRenderer shape={shape} selected={selected} />;
+    case "embed":
+      return <EmbedRenderer shape={shape} selected={selected} />;
   }
 }
 
@@ -55,6 +58,7 @@ function groupTransform(shape: YShape): {
     case "text":
     case "sticky":
     case "asset":
+    case "embed":
       return { x: shape.x, y: shape.y, rotation: shape.rot ?? 0 };
     default:
       return {};
