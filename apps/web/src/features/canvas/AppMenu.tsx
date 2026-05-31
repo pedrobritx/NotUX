@@ -1,13 +1,22 @@
 import { useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { GlassPanel, Icon, Popover, useTheme, type IconName } from "@notux/ui";
 import {
+  exportBoardToPdf,
   useAssetStore,
   useCommandStore,
   usePageStore,
   useShapeStore,
   useToolStore,
 } from "@notux/canvas";
+import { SnapshotsPanel } from "./SnapshotsPanel";
+
+interface AppMenuProps {
+  boardId: string;
+  client: SupabaseClient | null;
+  owned: boolean;
+}
 
 interface MenuItemProps {
   icon?: IconName;
@@ -41,7 +50,7 @@ function MenuSection({ title, children }: { title: string; children: ReactNode }
   );
 }
 
-export function AppMenu() {
+export function AppMenu({ boardId, client, owned }: AppMenuProps) {
   const navigate = useNavigate();
   const { theme, toggle: toggleTheme } = useTheme();
 
@@ -62,6 +71,9 @@ export function AppMenu() {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [pagesOpen, setPagesOpen] = useState(false);
+  const [snapshotsOpen, setSnapshotsOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
 
@@ -112,6 +124,21 @@ export function AppMenu() {
       .map((s) => s.id);
     useToolStore.getState().setTool("select");
     useToolStore.getState().setSelection(ids);
+  }
+
+  async function runExport(scope: "current" | "all") {
+    setExportOpen(false);
+    const all = usePageStore.getState().pages;
+    const active = usePageStore.getState().activePageId;
+    const pages = scope === "current" ? all.filter((p) => p.id === active) : all;
+    setExporting(true);
+    try {
+      await exportBoardToPdf({ pages, filename: "board.pdf" });
+    } catch (e) {
+      console.error("PDF export failed:", e);
+    } finally {
+      setExporting(false);
+    }
   }
 
   function commitDrop() {
@@ -188,6 +215,23 @@ export function AppMenu() {
               label="Import image or PDF"
               disabled={!canImport}
               onClick={() => run(() => fileRef.current?.click())}
+            />
+            <MenuItem
+              icon="download"
+              label={exporting ? "Exporting…" : "Export as PDF…"}
+              disabled={exporting}
+              onClick={() => {
+                setMenuOpen(false);
+                setExportOpen(true);
+              }}
+            />
+            <MenuItem
+              icon="history"
+              label="Snapshots…"
+              onClick={() => {
+                setMenuOpen(false);
+                setSnapshotsOpen(true);
+              }}
             />
           </MenuSection>
 
@@ -314,6 +358,38 @@ export function AppMenu() {
           ))}
         </div>
       </Popover>
+
+      {/* Export scope chooser */}
+      <Popover
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        anchorRef={menuBtnRef}
+        placement="bottom"
+        className="menu-popover"
+      >
+        <div className="menu">
+          <div className="menu__section-title">Export as PDF</div>
+          <MenuItem
+            icon="pages"
+            label="Current page"
+            onClick={() => void runExport("current")}
+          />
+          <MenuItem
+            icon="download"
+            label="All pages"
+            onClick={() => void runExport("all")}
+          />
+        </div>
+      </Popover>
+
+      <SnapshotsPanel
+        open={snapshotsOpen}
+        onClose={() => setSnapshotsOpen(false)}
+        anchorRef={menuBtnRef}
+        boardId={boardId}
+        client={client}
+        owned={owned}
+      />
 
       <input
         ref={fileRef}

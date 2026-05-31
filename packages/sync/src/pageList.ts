@@ -1,4 +1,5 @@
 import * as Y from "yjs";
+import { LOCAL_ORIGIN } from "./origin";
 
 // The ordered list of pages lives in a Y.Array("pageList") of small Y.Maps
 // ({ id, title }), separate from the per-page shape maps in getMap("pages").
@@ -59,7 +60,7 @@ export function ensureSeedPage(
 }
 
 export function addPageEntry(doc: Y.Doc, id: string, title: string): void {
-  doc.transact(() => getPageList(doc).push([makeEntry(id, title)]));
+  doc.transact(() => getPageList(doc).push([makeEntry(id, title)]), LOCAL_ORIGIN);
 }
 
 export function removePageEntry(doc: Y.Doc, id: string): void {
@@ -69,7 +70,7 @@ export function removePageEntry(doc: Y.Doc, id: string): void {
     if (idx >= 0) list.delete(idx, 1);
     // Drop the page's shapes too.
     doc.getMap<unknown>("pages").delete(id);
-  });
+  }, LOCAL_ORIGIN);
 }
 
 export function renamePageEntry(doc: Y.Doc, id: string, title: string): void {
@@ -82,7 +83,7 @@ export function renamePageEntry(doc: Y.Doc, id: string, title: string): void {
         return;
       }
     }
-  });
+  }, LOCAL_ORIGIN);
 }
 
 export function movePageEntry(doc: Y.Doc, fromIdx: number, toIdx: number): void {
@@ -95,5 +96,5 @@ export function movePageEntry(doc: Y.Doc, fromIdx: number, toIdx: number): void 
     list.delete(fromIdx, 1);
     const insertAt = Math.max(0, Math.min(toIdx, list.length));
     list.insert(insertAt, [makeEntry(id, title)]);
-  });
+  }, LOCAL_ORIGIN);
 }

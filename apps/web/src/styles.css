@@ -301,3 +301,116 @@ a {
   height: 100%;
   color: var(--fg-1);
 }
+
+/* Named snapshots panel (anchored off the app menu). */
+.snapshots {
+  display: flex;
+  flex-direction: column;
+  width: 268px;
+  max-height: 72vh;
+  overflow-y: auto;
+  gap: 8px;
+}
+
+.snapshots__head {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-1);
+  padding: 2px 4px;
+}
+
+.snapshots__note {
+  font-size: 13px;
+  color: var(--fg-1);
+  padding: 4px 4px;
+  margin: 0;
+}
+
+.snapshots__error {
+  font-size: 13px;
+  color: #ff6b6b;
+  padding: 0 4px;
+  margin: 0;
+}
+
+.snapshots__save {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.snapshots__input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--fg-0);
+  background: var(--glass-hover);
+  border: 1px solid var(--glass-stroke);
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+
+.snapshots__save-btn {
+  flex: none;
+  width: auto;
+  gap: 4px;
+}
+
+.snapshots__list {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--glass-stroke);
+  padding-top: 4px;
+}
+
+.snapshots__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  border-radius: 8px;
+}
+
+.snapshots__row:hover {
+  background: var(--glass-hover);
+}
+
+.snapshots__row-label {
+  flex: 1;
+  font-size: 14px;
+  color: var(--fg-0);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.snapshots__row-time {
+  font-size: 12px;
+  color: var(--fg-1);
+  flex: none;
+}
+
+.snapshots__restore {
+  appearance: none;
+  border: 1px solid var(--glass-stroke);
+  background: transparent;
+  color: var(--fg-0);
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  flex: none;
+}
+
+.snapshots__restore:hover:not(:disabled) {
+  background: var(--glass-hover);
+}
+
+.snapshots__restore:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

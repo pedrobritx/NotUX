@@ -20,3 +20,5 @@ export {
 } from "./store/dockStore";
 export type { InstrumentId, DockPosition } from "./store/dockStore";
 export type { ShapeStore } from "./store/shapeStore";
+export { exportBoardToPdf } from "./export/exportBoardToPdf";
+export type { ExportOptions, ExportPage } from "./export/exportBoardToPdf";

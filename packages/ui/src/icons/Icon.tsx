@@ -46,7 +46,9 @@ export type IconName =
   | "line"
   | "arrow"
   | "arrow-curved"
-  | "arrow-elbow";
+  | "arrow-elbow"
+  | "download"
+  | "history";
 
 const PATHS: Record<IconName, ReactNode> = {
   select: <path d="M5 3l6 16 2-6 6-2z" />,
@@ -160,6 +162,14 @@ const PATHS: Record<IconName, ReactNode> = {
   arrow: <path d="M5 19L19 5M11 5h8v8" />,
   "arrow-curved": <path d="M5 19C5 11 11 5 19 5M12 5h7v7" />,
   "arrow-elbow": <path d="M5 19h9V5M9 9l5-4 5 4" />,
+  download: <path d="M12 4v10m-4-4l4 4 4-4M5 19h14" />,
+  history: (
+    <>
+      <path d="M4 12a8 8 0 1 0 3-6.2" />
+      <path d="M4 4v4h4" />
+      <path d="M12 8v4l3 2" />
+    </>
+  ),
 };
 
 interface Props extends Omit<SVGProps<SVGSVGElement>, "name"> {

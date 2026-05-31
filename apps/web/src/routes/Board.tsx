@@ -12,21 +12,24 @@ import { Dock } from "../features/canvas/Dock";
 import { SaveStatus } from "../features/canvas/SaveStatus";
 import { SelectionInspector } from "../features/canvas/SelectionInspector";
 import { useIdentity } from "../features/canvas/useIdentity";
+import { ensureBoardOwnership } from "../features/board/boardOwnership";
 import { getSupabase } from "../lib/supabase";
 
 export default function Board() {
   const { boardId } = useParams<{ boardId: string }>();
   const [ready, setReady] = useState(false);
+  const [owned, setOwned] = useState(false);
   const identity = useIdentity();
+  const client = getSupabase();
   const activePageId = usePageStore((s) => s.activePageId);
   const { theme } = useTheme();
 
   useEffect(() => {
     if (!boardId) return;
     setReady(false);
+    setOwned(false);
     // Enable realtime collaboration when Supabase is configured; otherwise the
     // board runs in local-only mode against IndexedDB.
-    const client = getSupabase();
     useShapeStore
       .getState()
       .configureRealtime(client ? { client, identity } : null);
@@ -39,8 +42,10 @@ export default function Board() {
         // Seed/migrate the page list against the IndexedDB-hydrated doc.
         usePageStore.getState().initPages(boardId);
         setReady(true);
+        // Claim board ownership when signed in — gates named snapshots.
+        void ensureBoardOwnership(client, boardId).then((r) => setOwned(r.owned));
       });
-  }, [boardId, identity]);
+  }, [boardId, identity, client]);
 
   if (!ready) {
     return (
@@ -71,7 +76,7 @@ export default function Board() {
   return (
     <div className="board">
       <CanvasStage boardId={boardId!} pageId={activePageId} theme={theme} />
-      <AppMenu />
+      <AppMenu boardId={boardId!} client={client} owned={owned} />
       <Dock />
       <SelectionInspector pageId={activePageId} />
       <SaveStatus />
