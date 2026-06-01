@@ -1,27 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { bytesToHexBytea, hexByteaToBytes } from "@notux/sync";
 
 export interface NamedSnapshot {
   id: string;
   label: string;
   createdAt: string;
-}
-
-// PostgREST reads/writes a `bytea` column as a hex string in the "\x.." format.
-// Encoding the Yjs update as hex avoids needing a server-side base64 decode RPC
-// and works against the stock schema.
-function bytesToHexBytea(bytes: Uint8Array): string {
-  let hex = "\\x";
-  for (const b of bytes) hex += b.toString(16).padStart(2, "0");
-  return hex;
-}
-
-function hexByteaToBytes(s: string): Uint8Array {
-  const hex = s.startsWith("\\x") ? s.slice(2) : s;
-  const out = new Uint8Array(hex.length >> 1);
-  for (let i = 0; i < out.length; i++) {
-    out[i] = parseInt(hex.substr(i * 2, 2), 16);
-  }
-  return out;
 }
 
 export async function saveNamedSnapshot(

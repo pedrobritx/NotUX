@@ -9,6 +9,8 @@ import {
   getAwareness,
   findPageMap,
   getPageMap,
+  loadAutosave,
+  startAutosave,
   LOCAL_ORIGIN,
   type Awareness,
 } from "@notux/sync";
@@ -24,6 +26,10 @@ export interface RealtimeConfig {
 // One promise per boardId — concurrent callers for the same board share the
 // same init sequence (handles React StrictMode double-invoke).
 const _initPromises = new Map<string, Promise<void>>();
+
+// Detaches the durable-autosave listeners for the previously initialised board.
+// Stops the old loop before a new board's loop starts when switching boards.
+let _stopAutosave: (() => void) | null = null;
 
 interface ShapeStoreState {
   // Bumps on every Yjs mutation so React selectors re-render.
@@ -178,6 +184,15 @@ export const useShapeStore = create<ShapeStoreState>((set, get) => ({
         });
         getSupabaseProvider({ client: cfg.client, boardId, doc, awareness });
         set({ _awareness: awareness });
+
+        // Durable persistence: merge the server-side autosave snapshot so a
+        // fresh client (no IndexedDB) or a late-joiner arriving after every peer
+        // has left still loads the board, then keep that row up to date. CRDT
+        // merge means this is safe to run after IndexedDB + realtime attach.
+        _stopAutosave?.();
+        _stopAutosave = null;
+        await loadAutosave(cfg.client, boardId, doc);
+        _stopAutosave = startAutosave(cfg.client, boardId, doc);
       }
     })();
 
