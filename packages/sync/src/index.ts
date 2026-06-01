@@ -20,4 +20,10 @@ export type { SupabaseProviderOptions } from "./supabaseProvider";
 export { colorForSeed } from "./identity";
 export { LOCAL_ORIGIN } from "./origin";
 export { encodeSnapshot, restoreSnapshot } from "./snapshots";
+export {
+  loadAutosave,
+  startAutosave,
+  bytesToHexBytea,
+  hexByteaToBytes,
+} from "./autosave";
 export { Awareness } from "y-protocols/awareness";
