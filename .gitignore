@@ -9,3 +9,5 @@ dist/
 .turbo/
 coverage/
 .pnpm-store/
+
+supabase/.temp/
