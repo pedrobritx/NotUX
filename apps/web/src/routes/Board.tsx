@@ -13,12 +13,14 @@ import { SaveStatus } from "../features/canvas/SaveStatus";
 import { SelectionInspector } from "../features/canvas/SelectionInspector";
 import { useIdentity } from "../features/canvas/useIdentity";
 import { ensureBoardOwnership } from "../features/board/boardOwnership";
+import { BoardAccessIndicator } from "../features/board/BoardAccessIndicator";
 import { getSupabase } from "../lib/supabase";
 
 export default function Board() {
   const { boardId } = useParams<{ boardId: string }>();
   const [ready, setReady] = useState(false);
   const [owned, setOwned] = useState(false);
+  const [isPublic, setIsPublic] = useState(true);
   const identity = useIdentity();
   const client = getSupabase();
   const activePageId = usePageStore((s) => s.activePageId);
@@ -43,7 +45,10 @@ export default function Board() {
         usePageStore.getState().initPages(boardId);
         setReady(true);
         // Claim board ownership when signed in — gates named snapshots.
-        void ensureBoardOwnership(client, boardId).then((r) => setOwned(r.owned));
+        void ensureBoardOwnership(client, boardId).then((r) => {
+          setOwned(r.owned);
+          setIsPublic(r.isPublic);
+        });
       });
   }, [boardId, identity, client]);
 
@@ -77,6 +82,12 @@ export default function Board() {
     <div className="board">
       <CanvasStage boardId={boardId!} pageId={activePageId} theme={theme} />
       <AppMenu boardId={boardId!} client={client} owned={owned} />
+      <BoardAccessIndicator
+        client={client}
+        boardId={boardId!}
+        owned={owned}
+        isPublic={isPublic}
+      />
       <Dock />
       <SelectionInspector pageId={activePageId} />
       <SaveStatus />
