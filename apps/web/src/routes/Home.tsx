@@ -76,11 +76,11 @@ export default function Home() {
               </form>
             ) : (
               <button
-                className="home__link-button"
+                className="lg-button"
                 type="button"
                 onClick={() => setShowMagicLink(true)}
               >
-                Or sign in with email instead
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>mail</span> Sign in with email
               </button>
             )}
 
