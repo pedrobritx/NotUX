@@ -34,6 +34,12 @@ VITE_SUPABASE_URL=https://<project>.supabase.co
 VITE_SUPABASE_ANON_KEY=<anon-key>
 ```
 
+Sign-in supports **Google OAuth** and an email magic-link fallback. Boards
+created while signed in are private to your account by default and can be shared
+for realtime collaboration with one click. Full setup — including the Google
+OAuth client and Supabase configuration — is documented in
+[`docs/SETUP.md`](docs/SETUP.md).
+
 ## Deploying
 
 Pushing to `main` runs the GitHub Pages workflow. The repo's two secrets must be set:
