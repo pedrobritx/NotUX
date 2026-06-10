@@ -15,7 +15,7 @@
     "@notux/sync": "workspace:*",
     "@notux/types": "workspace:*",
     "@supabase/supabase-js": "^2.106.2",
-    "jspdf": "^2.5.2",
+    "jspdf": "^4.2.1",
     "konva": "^9.3.16",
     "nanoid": "^5.0.7",
     "pdfjs-dist": "^4.7.76",
