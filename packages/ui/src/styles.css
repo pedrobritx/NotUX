@@ -984,8 +984,22 @@ input:focus-visible {
   transition: background 140ms ease;
 }
 
+.app-menu__text-btn {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0 12px;
+}
+
+.app-menu__text-btn--active,
 .app-menu__btn:hover {
   background: var(--glass-hover);
+}
+
+.app-menu__divider {
+  width: 1px;
+  height: 20px;
+  background: var(--glass-stroke);
+  margin: 0 6px;
 }
 
 .app-menu__chevron {

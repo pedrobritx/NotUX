@@ -1,5 +1,6 @@
 import type { YSticky } from "@notux/types";
 import { Rect, Text } from "react-konva";
+import { useTextEditStore } from "../store/textEditStore";
 
 interface Props {
   shape: YSticky;
@@ -22,6 +23,7 @@ function inkFor(color: string): string {
 }
 
 export function StickyRenderer({ shape, selected }: Props) {
+  const isEditing = useTextEditStore((s) => s.session?.editingId === shape.id);
   // Local coords; the ShapesLayer Group carries x/y/rotation.
   return (
     <>
@@ -52,6 +54,7 @@ export function StickyRenderer({ shape, selected }: Props) {
         verticalAlign="middle"
         wrap="word"
         listening={false}
+        visible={!isEditing}
       />
     </>
   );

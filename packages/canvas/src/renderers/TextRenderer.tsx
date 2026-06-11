@@ -1,6 +1,7 @@
 import type { YText } from "@notux/types";
 import { Text } from "react-konva";
 import { resolveInkColor } from "../theme/adaptiveInk";
+import { useTextEditStore } from "../store/textEditStore";
 
 interface Props {
   shape: YText;
@@ -17,6 +18,7 @@ function fontStyle(shape: YText): string | undefined {
 }
 
 export function TextRenderer({ shape, selected, darkCanvas = false }: Props) {
+  const isEditing = useTextEditStore((s) => s.session?.editingId === shape.id);
   // Local coords; the ShapesLayer Group carries x/y/rotation.
   return (
     <Text
@@ -34,6 +36,7 @@ export function TextRenderer({ shape, selected, darkCanvas = false }: Props) {
       shadowBlur={selected ? 12 : 0}
       shadowOpacity={selected ? 0.9 : 0}
       listening
+      visible={!isEditing}
     />
   );
 }
