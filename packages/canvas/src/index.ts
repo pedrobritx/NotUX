@@ -9,6 +9,13 @@ export { useToolStore } from "./store/toolStore";
 export type { ToolOptions } from "./store/toolStore";
 export { useCommandStore } from "./store/commandStore";
 export { useAssetStore } from "./store/assetStore";
+export { useSettingsStore } from "./store/settingsStore";
+export { usePrefsStore } from "./store/prefsStore";
+export {
+  BACKGROUND_PRESETS,
+  effectiveBackground,
+  isDarkBackground,
+} from "./theme/backgroundPresets";
 export { DEFAULT_PAGE_ID, usePageStore } from "./store/pageStore";
 export type { PageMeta } from "./store/pageStore";
 export {

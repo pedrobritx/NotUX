@@ -13,6 +13,7 @@ import { TransformLayer } from "./layers/TransformLayer";
 import { useAssetStore } from "./store/assetStore";
 import { useCommandStore } from "./store/commandStore";
 import { useDraftStore } from "./store/draftStore";
+import { usePrefsStore } from "./store/prefsStore";
 import { DEFAULT_PAGE_ID } from "./store/pageStore";
 import { useShapeStore } from "./store/shapeStore";
 import { useTextEditStore } from "./store/textEditStore";
@@ -27,9 +28,9 @@ import { screenToWorld, zoomAt } from "./viewport/Viewport";
 interface Props {
   boardId: string;
   pageId?: string;
-  // Changing this (the app's active theme) re-renders the Konva layers so they
-  // re-read CSS-variable colors via cssVar(). The value itself is unused.
-  theme?: string;
+  // The app's active theme. Picks the background-preset variant and re-renders
+  // the Konva layers so they re-read CSS-variable colors via cssVar().
+  theme?: "light" | "dark";
 }
 
 const ZOOM_PER_WHEEL_PIXEL = 0.0015;
@@ -59,7 +60,7 @@ function isTypingTarget(t: EventTarget | null): boolean {
 export function CanvasStage({
   boardId: _boardId,
   pageId = DEFAULT_PAGE_ID,
-  theme: _theme,
+  theme = "light",
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
@@ -72,6 +73,7 @@ export function CanvasStage({
 
   const { undo, redo, canUndo, canRedo } = useUndoManager();
   const awareness = useAwareness();
+  const showRemoteCursors = usePrefsStore((s) => s.showRemoteCursors);
 
   // Register undo/redo + zoom so the app menu (outside the canvas) can drive
   // them. Re-registers when handlers or canvas size change.
@@ -447,6 +449,7 @@ export function CanvasStage({
           font: hit.font,
           size: hit.size,
           color: hit.color,
+          align: hit.align ?? "left",
         });
       } else if (hit && hit.kind === "sticky" && !hit.locked) {
         const pad = 14;
@@ -459,6 +462,7 @@ export function CanvasStage({
           font: "-apple-system, system-ui, sans-serif",
           size: hit.fontSize ?? 18,
           color: "#1c1c1e",
+          align: hit.align ?? "center",
         });
       }
     },
@@ -519,10 +523,17 @@ export function CanvasStage({
         scaleY={viewport.scale}
         listening
       >
-        <BackgroundLayer viewport={viewport} width={size.w} height={size.h} />
+        <BackgroundLayer
+          viewport={viewport}
+          width={size.w}
+          height={size.h}
+          theme={theme}
+        />
         <ShapesLayer ref={shapesLayerRef} shapes={shapes} selection={selection} />
         <OverlayLayer draft={draft} selectedShapes={selectedShapes} viewport={viewport} />
-        <PresenceLayer awareness={awareness} viewport={viewport} />
+        {showRemoteCursors && (
+          <PresenceLayer awareness={awareness} viewport={viewport} />
+        )}
       </Stage>
       <MediaOverlayLayer
         shapes={shapes}

@@ -17,6 +17,7 @@ export function TextRenderer({ shape, selected }: Props) {
       fontFamily={shape.font}
       fontSize={shape.size}
       fill={shape.color}
+      align={shape.align ?? "left"}
       shadowColor={selected ? "#5ac8fa" : undefined}
       shadowBlur={selected ? 12 : 0}
       shadowOpacity={selected ? 0.9 : 0}

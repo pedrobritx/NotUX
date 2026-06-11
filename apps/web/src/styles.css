@@ -331,6 +331,20 @@ a {
   background: var(--glass-hover);
 }
 
+.selection-inspector__btn--active {
+  background: color-mix(in srgb, var(--accent) 24%, transparent);
+  border-color: var(--accent);
+}
+
+/* Inline segmented button group (e.g. text alignment). */
+.selection-inspector__seg {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 6px;
+  flex: 1;
+}
+
 .selection-inspector__lock {
   appearance: none;
   border: 1px solid var(--glass-stroke);

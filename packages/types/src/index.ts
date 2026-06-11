@@ -17,4 +17,5 @@ export type {
   YShapeKind,
   ToolKind,
   StrokeStyle,
+  TextAlign,
 } from "./yshape";

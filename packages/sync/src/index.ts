@@ -19,6 +19,17 @@ export {
 export type { SupabaseProviderOptions } from "./supabaseProvider";
 export { colorForSeed } from "./identity";
 export { LOCAL_ORIGIN } from "./origin";
+export {
+  DEFAULT_BOARD_SETTINGS,
+  getSettingsMap,
+  readBoardSettings,
+  setBoardSetting,
+} from "./boardSettings";
+export type {
+  BackgroundPresetId,
+  BoardSettings,
+  GridStyle,
+} from "./boardSettings";
 export { encodeSnapshot, restoreSnapshot } from "./snapshots";
 export {
   loadAutosave,

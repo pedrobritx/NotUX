@@ -4,6 +4,7 @@ import {
   CanvasStage,
   useAssetStore,
   usePageStore,
+  useSettingsStore,
   useShapeStore,
 } from "@notux/canvas";
 import { useTheme } from "@notux/ui";
@@ -43,6 +44,7 @@ export default function Board() {
       .then(() => {
         // Seed/migrate the page list against the IndexedDB-hydrated doc.
         usePageStore.getState().initPages(boardId);
+        useSettingsStore.getState().initSettings(boardId);
         setReady(true);
         // Claim board ownership when signed in — gates named snapshots.
         void ensureBoardOwnership(client, boardId).then((r) => {

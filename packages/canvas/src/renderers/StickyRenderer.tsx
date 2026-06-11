@@ -48,7 +48,7 @@ export function StickyRenderer({ shape, selected }: Props) {
         fontSize={shape.fontSize ?? 18}
         lineHeight={1.3}
         fill={inkFor(shape.color)}
-        align="center"
+        align={shape.align ?? "center"}
         verticalAlign="middle"
         wrap="word"
         listening={false}

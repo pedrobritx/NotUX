@@ -90,6 +90,7 @@ export function TextEditorOverlay({ viewport, pageId, authorId }: Props) {
         minHeight: session.size * viewport.scale * 1.5,
         font: `${session.size * viewport.scale}px ${session.font}`,
         color: session.color,
+        textAlign: session.align ?? "left",
         background: "rgba(0,0,0,0.35)",
         border: "1px solid rgba(90,200,250,0.6)",
         borderRadius: 6,
