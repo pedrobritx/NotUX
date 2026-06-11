@@ -1,12 +1,14 @@
 import type { YText } from "@notux/types";
 import { Text } from "react-konva";
+import { resolveInkColor } from "../theme/adaptiveInk";
 
 interface Props {
   shape: YText;
   selected?: boolean;
+  darkCanvas?: boolean;
 }
 
-export function TextRenderer({ shape, selected }: Props) {
+export function TextRenderer({ shape, selected, darkCanvas = false }: Props) {
   // Local coords; the ShapesLayer Group carries x/y/rotation.
   return (
     <Text
@@ -16,7 +18,7 @@ export function TextRenderer({ shape, selected }: Props) {
       text={shape.content}
       fontFamily={shape.font}
       fontSize={shape.size}
-      fill={shape.color}
+      fill={resolveInkColor(shape.color, darkCanvas)}
       align={shape.align ?? "left"}
       shadowColor={selected ? "#5ac8fa" : undefined}
       shadowBlur={selected ? 12 : 0}

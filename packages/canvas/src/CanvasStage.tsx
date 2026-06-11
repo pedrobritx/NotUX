@@ -14,7 +14,13 @@ import { useAssetStore } from "./store/assetStore";
 import { useCommandStore } from "./store/commandStore";
 import { useDraftStore } from "./store/draftStore";
 import { usePrefsStore } from "./store/prefsStore";
+import { useSettingsStore } from "./store/settingsStore";
 import { DEFAULT_PAGE_ID } from "./store/pageStore";
+import { resolveInkColor } from "./theme/adaptiveInk";
+import {
+  effectiveBackground,
+  isDarkBackground,
+} from "./theme/backgroundPresets";
 import { useShapeStore } from "./store/shapeStore";
 import { useTextEditStore } from "./store/textEditStore";
 import { useToolStore } from "./store/toolStore";
@@ -74,6 +80,9 @@ export function CanvasStage({
   const { undo, redo, canUndo, canRedo } = useUndoManager();
   const awareness = useAwareness();
   const showRemoteCursors = usePrefsStore((s) => s.showRemoteCursors);
+  const background = useSettingsStore((s) => s.background);
+  // Smart ink keys off the paper the shapes actually sit on, not the UI theme.
+  const darkCanvas = isDarkBackground(effectiveBackground(background, theme));
 
   // Register undo/redo + zoom so the app menu (outside the canvas) can drive
   // them. Re-registers when handlers or canvas size change.
@@ -529,8 +538,18 @@ export function CanvasStage({
           height={size.h}
           theme={theme}
         />
-        <ShapesLayer ref={shapesLayerRef} shapes={shapes} selection={selection} />
-        <OverlayLayer draft={draft} selectedShapes={selectedShapes} viewport={viewport} />
+        <ShapesLayer
+          ref={shapesLayerRef}
+          shapes={shapes}
+          selection={selection}
+          darkCanvas={darkCanvas}
+        />
+        <OverlayLayer
+          draft={draft}
+          selectedShapes={selectedShapes}
+          viewport={viewport}
+          darkCanvas={darkCanvas}
+        />
         {showRemoteCursors && (
           <PresenceLayer awareness={awareness} viewport={viewport} />
         )}
@@ -544,6 +563,7 @@ export function CanvasStage({
         viewport={viewport}
         pageId={pageId}
         authorId={authorIdRef.current}
+        darkCanvas={darkCanvas}
       />
     </div>
   );

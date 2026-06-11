@@ -16,24 +16,27 @@ import { TextRenderer } from "../renderers/TextRenderer";
 interface Props {
   shapes: YShape[];
   selection: Set<string>;
+  // True when the effective board background is dark; "ink" colors (strokes,
+  // text, outlines) adapt for readability. Fills and stickies do not.
+  darkCanvas?: boolean;
 }
 
-function renderShape(shape: YShape, selected: boolean) {
+function renderShape(shape: YShape, selected: boolean, darkCanvas: boolean) {
   switch (shape.kind) {
     case "stroke":
-      return <StrokeRenderer shape={shape} selected={selected} />;
+      return <StrokeRenderer shape={shape} selected={selected} darkCanvas={darkCanvas} />;
     case "rect":
-      return <RectRenderer shape={shape} selected={selected} />;
+      return <RectRenderer shape={shape} selected={selected} darkCanvas={darkCanvas} />;
     case "ellipse":
-      return <EllipseRenderer shape={shape} selected={selected} />;
+      return <EllipseRenderer shape={shape} selected={selected} darkCanvas={darkCanvas} />;
     case "polygon":
-      return <PolygonRenderer shape={shape} selected={selected} />;
+      return <PolygonRenderer shape={shape} selected={selected} darkCanvas={darkCanvas} />;
     case "line":
-      return <LineRenderer shape={shape} selected={selected} />;
+      return <LineRenderer shape={shape} selected={selected} darkCanvas={darkCanvas} />;
     case "arrow":
-      return <ArrowRenderer shape={shape} selected={selected} />;
+      return <ArrowRenderer shape={shape} selected={selected} darkCanvas={darkCanvas} />;
     case "text":
-      return <TextRenderer shape={shape} selected={selected} />;
+      return <TextRenderer shape={shape} selected={selected} darkCanvas={darkCanvas} />;
     case "sticky":
       return <StickyRenderer shape={shape} selected={selected} />;
     case "asset":
@@ -72,7 +75,7 @@ function groupOpacity(shape: YShape): number {
 }
 
 export const ShapesLayer = forwardRef<Konva.Layer, Props>(function ShapesLayer(
-  { shapes, selection },
+  { shapes, selection, darkCanvas = false },
   ref,
 ) {
   return (
@@ -84,7 +87,7 @@ export const ShapesLayer = forwardRef<Konva.Layer, Props>(function ShapesLayer(
           opacity={groupOpacity(shape)}
           {...groupTransform(shape)}
         >
-          {renderShape(shape, selection.has(shape.id))}
+          {renderShape(shape, selection.has(shape.id), darkCanvas)}
         </Group>
       ))}
     </Layer>

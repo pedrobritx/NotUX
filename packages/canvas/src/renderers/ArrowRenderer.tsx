@@ -1,9 +1,11 @@
 import type { YArrow } from "@notux/types";
 import { Arrow } from "react-konva";
+import { resolveInkColor } from "../theme/adaptiveInk";
 
 interface Props {
   shape: YArrow;
   selected?: boolean;
+  darkCanvas?: boolean;
 }
 
 // Resolve the polyline the arrow follows for each routing variant. Konva draws
@@ -27,14 +29,15 @@ export function arrowPoints(shape: YArrow): { points: number[]; tension: number 
   return { points: [x1, y1, x2, y2], tension: 0 };
 }
 
-export function ArrowRenderer({ shape, selected }: Props) {
+export function ArrowRenderer({ shape, selected, darkCanvas = false }: Props) {
   const { points, tension } = arrowPoints(shape);
+  const ink = resolveInkColor(shape.stroke, darkCanvas);
   return (
     <Arrow
       points={points}
       tension={tension}
-      stroke={shape.stroke}
-      fill={shape.stroke}
+      stroke={ink}
+      fill={ink}
       strokeWidth={shape.width}
       pointerLength={Math.max(8, shape.width * 3)}
       pointerWidth={Math.max(8, shape.width * 3)}

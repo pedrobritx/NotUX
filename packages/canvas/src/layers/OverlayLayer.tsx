@@ -5,6 +5,7 @@ import { strokeOutline } from "../renderers/strokeGeometry";
 import { arrowPoints } from "../renderers/ArrowRenderer";
 import { polygonPoints } from "../renderers/PolygonRenderer";
 import { shapeBounds } from "../tools/shapeOps";
+import { resolveInkColor } from "../theme/adaptiveInk";
 import { cssVar } from "../theme/cssVar";
 import type { ViewportState } from "../viewport/Viewport";
 
@@ -15,14 +16,23 @@ interface Props {
   >;
   selectedShapes: YShape[];
   viewport: ViewportState;
+  darkCanvas?: boolean;
 }
 
 // Renders in-flight tool previews and the selection bounding box. Cleared
-// between gestures by the tool that produced the draft.
-export function OverlayLayer({ draft, selectedShapes, viewport }: Props) {
+// between gestures by the tool that produced the draft. Draft previews run
+// through the same adaptive-ink mapping as committed shapes so what you see
+// while drawing is what lands.
+export function OverlayLayer({
+  draft,
+  selectedShapes,
+  viewport,
+  darkCanvas = false,
+}: Props) {
   const handleSize = 6 / viewport.scale;
   const selection = cssVar("--selection", "#5ac8fa");
   const selectionFill = cssVar("--selection-fill", "rgba(90, 200, 250, 0.10)");
+  const ink = (c: string) => resolveInkColor(c, darkCanvas);
 
   return (
     <Layer listening={false}>
@@ -37,7 +47,7 @@ export function OverlayLayer({ draft, selectedShapes, viewport }: Props) {
           <Line
             points={flat}
             closed
-            fill={draft.stroke.color}
+            fill={isHighlighter ? draft.stroke.color : ink(draft.stroke.color)}
             opacity={draft.stroke.opacity}
             globalCompositeOperation={isHighlighter ? "multiply" : undefined}
             lineCap="round"
@@ -53,7 +63,7 @@ export function OverlayLayer({ draft, selectedShapes, viewport }: Props) {
           width={draft.rect.w}
           height={draft.rect.h}
           cornerRadius={draft.rect.radius ?? 0}
-          stroke={draft.rect.stroke}
+          stroke={ink(draft.rect.stroke)}
           fill={draft.rect.fill ?? undefined}
           strokeWidth={2}
           dash={[6 / viewport.scale, 4 / viewport.scale]}
@@ -70,7 +80,7 @@ export function OverlayLayer({ draft, selectedShapes, viewport }: Props) {
             draft.polygon.h,
           )}
           closed
-          stroke={draft.polygon.stroke}
+          stroke={ink(draft.polygon.stroke)}
           fill={draft.polygon.fill ?? undefined}
           strokeWidth={2}
           lineJoin="round"
@@ -84,7 +94,7 @@ export function OverlayLayer({ draft, selectedShapes, viewport }: Props) {
           y={draft.ellipse.y + draft.ellipse.h / 2}
           radiusX={draft.ellipse.w / 2}
           radiusY={draft.ellipse.h / 2}
-          stroke={draft.ellipse.stroke}
+          stroke={ink(draft.ellipse.stroke)}
           fill={draft.ellipse.fill ?? undefined}
           strokeWidth={2}
           dash={[6 / viewport.scale, 4 / viewport.scale]}
@@ -94,7 +104,7 @@ export function OverlayLayer({ draft, selectedShapes, viewport }: Props) {
       {draft.line && (
         <Line
           points={[draft.line.x1, draft.line.y1, draft.line.x2, draft.line.y2]}
-          stroke={draft.line.stroke}
+          stroke={ink(draft.line.stroke)}
           strokeWidth={draft.line.width}
           lineCap="round"
         />
@@ -117,8 +127,8 @@ export function OverlayLayer({ draft, selectedShapes, viewport }: Props) {
           <Arrow
             points={points}
             tension={tension}
-            stroke={draft.arrow.stroke}
-            fill={draft.arrow.stroke}
+            stroke={ink(draft.arrow.stroke)}
+            fill={ink(draft.arrow.stroke)}
             strokeWidth={draft.arrow.width}
             pointerLength={Math.max(8, draft.arrow.width * 3)}
             pointerWidth={Math.max(8, draft.arrow.width * 3)}

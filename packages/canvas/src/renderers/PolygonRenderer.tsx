@@ -1,9 +1,11 @@
 import type { YPolygon } from "@notux/types";
 import { Line } from "react-konva";
+import { resolveInkColor } from "../theme/adaptiveInk";
 
 interface Props {
   shape: YPolygon;
   selected?: boolean;
+  darkCanvas?: boolean;
 }
 
 // Points of the polygon inscribed in the shape's local w×h box (the ShapesLayer
@@ -16,12 +18,12 @@ export function polygonPoints(variant: YPolygon["variant"], w: number, h: number
   return [w / 2, 0, w, h / 2, w / 2, h, 0, h / 2];
 }
 
-export function PolygonRenderer({ shape, selected }: Props) {
+export function PolygonRenderer({ shape, selected, darkCanvas = false }: Props) {
   return (
     <Line
       points={polygonPoints(shape.variant, shape.w, shape.h)}
       closed
-      stroke={shape.stroke}
+      stroke={resolveInkColor(shape.stroke, darkCanvas)}
       strokeWidth={2}
       lineJoin="round"
       fill={shape.fill ?? undefined}
