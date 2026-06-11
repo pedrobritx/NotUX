@@ -304,6 +304,23 @@ a {
   background: var(--glass-hover);
 }
 
+@keyframes pill-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-6px);
+  }
+}
+
+.follow-pill {
+  animation: pill-in 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .follow-pill {
+    animation: none;
+  }
+}
+
 .follow-pill__dot {
   width: 8px;
   height: 8px;
