@@ -70,6 +70,17 @@
   color-scheme: light;
 }
 
+/* ----- Icons (SF Symbol PNGs tinted via mask) ----------------------------- */
+
+.icon-mask {
+  display: inline-block;
+  flex: none;
+  background-color: currentColor;
+  mask: center / contain no-repeat;
+  -webkit-mask: center / contain no-repeat;
+  transition: background-color 140ms ease;
+}
+
 /* ----- Glass primitives -------------------------------------------------- */
 
 .glass-panel {
