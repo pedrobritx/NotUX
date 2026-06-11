@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Stage } from "react-konva";
 import { newAuthorId } from "./ids";
 import { useAwareness } from "./hooks/useAwareness";
+import { useFollowViewport } from "./hooks/useFollowViewport";
 import { useUndoManager } from "./hooks/useUndoManager";
+import { useFollowStore } from "./store/followStore";
 import { BackgroundLayer } from "./layers/BackgroundLayer";
 import { OverlayLayer } from "./layers/OverlayLayer";
 import { PresenceLayer } from "./layers/PresenceLayer";
@@ -13,7 +15,14 @@ import { TransformLayer } from "./layers/TransformLayer";
 import { useAssetStore } from "./store/assetStore";
 import { useCommandStore } from "./store/commandStore";
 import { useDraftStore } from "./store/draftStore";
+import { usePrefsStore } from "./store/prefsStore";
+import { useSettingsStore } from "./store/settingsStore";
 import { DEFAULT_PAGE_ID } from "./store/pageStore";
+import { resolveInkColor } from "./theme/adaptiveInk";
+import {
+  effectiveBackground,
+  isDarkBackground,
+} from "./theme/backgroundPresets";
 import { useShapeStore } from "./store/shapeStore";
 import { useTextEditStore } from "./store/textEditStore";
 import { useToolStore } from "./store/toolStore";
@@ -27,9 +36,9 @@ import { screenToWorld, zoomAt } from "./viewport/Viewport";
 interface Props {
   boardId: string;
   pageId?: string;
-  // Changing this (the app's active theme) re-renders the Konva layers so they
-  // re-read CSS-variable colors via cssVar(). The value itself is unused.
-  theme?: string;
+  // The app's active theme. Picks the background-preset variant and re-renders
+  // the Konva layers so they re-read CSS-variable colors via cssVar().
+  theme?: "light" | "dark";
 }
 
 const ZOOM_PER_WHEEL_PIXEL = 0.0015;
@@ -59,7 +68,7 @@ function isTypingTarget(t: EventTarget | null): boolean {
 export function CanvasStage({
   boardId: _boardId,
   pageId = DEFAULT_PAGE_ID,
-  theme: _theme,
+  theme = "light",
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
@@ -72,11 +81,17 @@ export function CanvasStage({
 
   const { undo, redo, canUndo, canRedo } = useUndoManager();
   const awareness = useAwareness();
+  const showRemoteCursors = usePrefsStore((s) => s.showRemoteCursors);
+  const background = useSettingsStore((s) => s.background);
+  // Smart ink keys off the paper the shapes actually sit on, not the UI theme.
+  const darkCanvas = isDarkBackground(effectiveBackground(background, theme));
 
   // Register undo/redo + zoom so the app menu (outside the canvas) can drive
   // them. Re-registers when handlers or canvas size change.
   const sizeRef = useRef(size);
   sizeRef.current = size;
+  const viewportRef = useRef(viewport);
+  viewportRef.current = viewport;
   useEffect(() => {
     const zoomBy = (factor: number) =>
       setViewport((v) =>
@@ -92,6 +107,49 @@ export function CanvasStage({
       zoomReset: () => setViewport((v) => ({ ...v, scale: 1 })),
     });
   }, [undo, redo, canUndo, canRedo]);
+
+  // ----- Spotlight / follow mode -------------------------------------------
+  const spotlighting = useFollowStore((s) => s.spotlighting);
+  const followingClientID = useFollowStore((s) => s.followingClientID);
+  useFollowViewport({ awareness, setViewport, sizeRef });
+
+  // Publish our spotlight flag so peers auto-follow while we present.
+  useEffect(() => {
+    if (!awareness) return;
+    awareness.setLocalStateField("spotlight", spotlighting ? true : null);
+  }, [awareness, spotlighting]);
+
+  // Publish our view (world-space screen centre + scale) at ~10 Hz so peers
+  // can follow us. Skipped while we ourselves follow someone — a follower's
+  // view is never consumed and would just flood the channel.
+  const viewTimerRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!awareness || followingClientID !== null) return;
+    if (viewTimerRef.current !== null) return; // trailing-edge throttle
+    viewTimerRef.current = window.setTimeout(() => {
+      viewTimerRef.current = null;
+      const v = viewportRef.current;
+      const s = sizeRef.current;
+      awareness.setLocalStateField("view", {
+        cx: (s.w / 2 - v.x) / v.scale,
+        cy: (s.h / 2 - v.y) / v.scale,
+        scale: v.scale,
+      });
+    }, 100);
+  }, [awareness, viewport, size, followingClientID]);
+  useEffect(() => {
+    return () => {
+      if (viewTimerRef.current !== null) window.clearTimeout(viewTimerRef.current);
+    };
+  }, []);
+
+  // Any manual viewport gesture breaks follow mode (and suppresses auto
+  // re-follow until that presenter re-toggles their spotlight).
+  const breakFollow = useCallback(() => {
+    if (useFollowStore.getState().followingClientID !== null) {
+      useFollowStore.getState().stopFollowing(true);
+    }
+  }, []);
 
   // Publish the local cursor (world coords) to awareness, throttled to one
   // update per animation frame so rapid pointer moves don't flood the channel.
@@ -283,6 +341,10 @@ export function CanvasStage({
     return () => {
       if (cursorRafRef.current !== null) cancelAnimationFrame(cursorRafRef.current);
       awareness?.setLocalStateField("cursor", null);
+      awareness?.setLocalStateField("view", null);
+      awareness?.setLocalStateField("spotlight", null);
+      useFollowStore.getState().stopFollowing();
+      useFollowStore.getState().setSpotlighting(false);
     };
   }, [awareness]);
 
@@ -308,6 +370,7 @@ export function CanvasStage({
   const onPointerDown = useCallback(
     (evt: React.PointerEvent<HTMLDivElement>) => {
       const native = evt.nativeEvent;
+      breakFollow();
       if (native.button === 1 || spaceHeld || tool === "hand") {
         evt.preventDefault();
         panRef.current = { active: true, lastX: native.clientX, lastY: native.clientY };
@@ -331,7 +394,7 @@ export function CanvasStage({
       evt.currentTarget.setPointerCapture(native.pointerId);
       toolRef.current.onPointerDown(pointerToToolPoint(native), buildToolContext());
     },
-    [spaceHeld, tool, viewport, buildToolContext],
+    [spaceHeld, tool, viewport, buildToolContext, breakFollow],
   );
 
   const onPointerMove = useCallback(
@@ -378,6 +441,7 @@ export function CanvasStage({
   const onWheel = useCallback((evt: React.WheelEvent<HTMLDivElement>) => {
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
+    breakFollow();
     const sx = evt.clientX - rect.left;
     const sy = evt.clientY - rect.top;
     if (evt.ctrlKey || evt.metaKey) {
@@ -390,7 +454,7 @@ export function CanvasStage({
         y: v.y - evt.deltaY * PAN_PER_WHEEL_PIXEL,
       }));
     }
-  }, []);
+  }, [breakFollow]);
 
   // File drag-and-drop import. dragover must preventDefault for drop to fire.
   const onDragOver = useCallback((evt: React.DragEvent<HTMLDivElement>) => {
@@ -447,6 +511,7 @@ export function CanvasStage({
           font: hit.font,
           size: hit.size,
           color: hit.color,
+          align: hit.align ?? "left",
         });
       } else if (hit && hit.kind === "sticky" && !hit.locked) {
         const pad = 14;
@@ -459,6 +524,7 @@ export function CanvasStage({
           font: "-apple-system, system-ui, sans-serif",
           size: hit.fontSize ?? 18,
           color: "#1c1c1e",
+          align: hit.align ?? "center",
         });
       }
     },
@@ -519,10 +585,27 @@ export function CanvasStage({
         scaleY={viewport.scale}
         listening
       >
-        <BackgroundLayer viewport={viewport} width={size.w} height={size.h} />
-        <ShapesLayer ref={shapesLayerRef} shapes={shapes} selection={selection} />
-        <OverlayLayer draft={draft} selectedShapes={selectedShapes} viewport={viewport} />
-        <PresenceLayer awareness={awareness} viewport={viewport} />
+        <BackgroundLayer
+          viewport={viewport}
+          width={size.w}
+          height={size.h}
+          theme={theme}
+        />
+        <ShapesLayer
+          ref={shapesLayerRef}
+          shapes={shapes}
+          selection={selection}
+          darkCanvas={darkCanvas}
+        />
+        <OverlayLayer
+          draft={draft}
+          selectedShapes={selectedShapes}
+          viewport={viewport}
+          darkCanvas={darkCanvas}
+        />
+        {showRemoteCursors && (
+          <PresenceLayer awareness={awareness} viewport={viewport} />
+        )}
       </Stage>
       <MediaOverlayLayer
         shapes={shapes}
@@ -533,6 +616,7 @@ export function CanvasStage({
         viewport={viewport}
         pageId={pageId}
         authorId={authorIdRef.current}
+        darkCanvas={darkCanvas}
       />
     </div>
   );

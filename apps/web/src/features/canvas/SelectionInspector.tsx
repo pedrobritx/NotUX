@@ -1,7 +1,14 @@
 import { useMemo } from "react";
-import type { YShape } from "@notux/types";
+import type { TextAlign, YShape } from "@notux/types";
+import { Icon, type IconName } from "@notux/ui";
 import { useShapeStore, useToolStore } from "@notux/canvas";
 import { COLORS } from "./palette";
+
+const ALIGN_OPTIONS: Array<{ id: TextAlign; icon: IconName; label: string }> = [
+  { id: "left", icon: "align-left", label: "Align left" },
+  { id: "center", icon: "align-center", label: "Align center" },
+  { id: "right", icon: "align-right", label: "Align right" },
+];
 
 interface Props {
   pageId: string;
@@ -95,6 +102,9 @@ export function SelectionInspector({ pageId }: Props) {
   const hasColor = selected.some((s) => shapeColor(s) !== undefined);
   const fillShapes = selected.filter(isFillKind);
   const textShapes = selected.filter((s) => s.kind === "text");
+  const alignShapes = selected.filter(
+    (s) => s.kind === "text" || s.kind === "sticky",
+  );
 
   const currentColor = shared(selected, shapeColor);
   const currentFill = shared(fillShapes, (s) =>
@@ -103,6 +113,13 @@ export function SelectionInspector({ pageId }: Props) {
   const currentOpacity = shared(selected, (s) => s.opacity ?? 1);
   const currentSize = shared(textShapes, (s) =>
     s.kind === "text" ? s.size : undefined,
+  );
+  const currentAlign = shared(alignShapes, (s) =>
+    s.kind === "text"
+      ? (s.align ?? "left")
+      : s.kind === "sticky"
+        ? (s.align ?? "center")
+        : undefined,
   );
   const allLocked = shared(selected, (s) => !!s.locked) === true;
 
@@ -184,6 +201,36 @@ export function SelectionInspector({ pageId }: Props) {
           aria-label="Opacity"
         />
       </div>
+
+      {alignShapes.length > 0 && (
+        <div className="selection-inspector__row">
+          <span className="selection-inspector__label">Align</span>
+          <div className="selection-inspector__seg">
+            {ALIGN_OPTIONS.map((a) => (
+              <button
+                key={a.id}
+                type="button"
+                className={
+                  "selection-inspector__btn" +
+                  (currentAlign === a.id ? " selection-inspector__btn--active" : "")
+                }
+                onClick={() =>
+                  patchEach((s) =>
+                    s.kind === "text" || s.kind === "sticky"
+                      ? { align: a.id }
+                      : null,
+                  )
+                }
+                title={a.label}
+                aria-label={a.label}
+                aria-pressed={currentAlign === a.id}
+              >
+                <Icon name={a.icon} size={15} />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {textShapes.length > 0 && (
         <div className="selection-inspector__row">

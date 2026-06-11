@@ -114,6 +114,7 @@ interface DockStoreState {
   shapesFlyoutOpen: boolean;
   stickyPopoverOpen: boolean;
   colorPickerOpen: boolean;
+  importPopoverOpen: boolean;
 
   selectInstrument(id: InstrumentId): void;
   setPenStyle(id: InstrumentId): void;
@@ -129,6 +130,7 @@ interface DockStoreState {
   setShapesFlyoutOpen(open: boolean): void;
   setStickyPopoverOpen(open: boolean): void;
   setColorPickerOpen(open: boolean): void;
+  setImportPopoverOpen(open: boolean): void;
   closeAllPopovers(): void;
 }
 
@@ -196,6 +198,7 @@ export const useDockStore = create<DockStoreState>((set, get) => {
     shapesFlyoutOpen: false,
     stickyPopoverOpen: false,
     colorPickerOpen: false,
+    importPopoverOpen: false,
 
     selectInstrument(id) {
       set({
@@ -205,6 +208,7 @@ export const useDockStore = create<DockStoreState>((set, get) => {
         shapesFlyoutOpen: false,
         stickyPopoverOpen: false,
         colorPickerOpen: false,
+        importPopoverOpen: false,
       });
       selectInstrumentInTool(id, get().instruments[id]);
     },
@@ -260,6 +264,9 @@ export const useDockStore = create<DockStoreState>((set, get) => {
     setColorPickerOpen(open) {
       set({ colorPickerOpen: open });
     },
+    setImportPopoverOpen(open) {
+      set({ importPopoverOpen: open });
+    },
     closeAllPopovers() {
       set({
         penPopoverOpen: false,
@@ -267,6 +274,7 @@ export const useDockStore = create<DockStoreState>((set, get) => {
         shapesFlyoutOpen: false,
         stickyPopoverOpen: false,
         colorPickerOpen: false,
+        importPopoverOpen: false,
       });
     },
   };

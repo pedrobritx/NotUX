@@ -5,8 +5,13 @@ export interface RemoteCursor {
   clientID: number;
   name: string;
   color: string;
+  avatarUrl: string | null;
   cursor: { x: number; y: number } | null;
   selection: string[];
+  // True while this peer is presenting (spotlight).
+  spotlight: boolean;
+  // True when the peer broadcasts a followable viewport.
+  hasView: boolean;
 }
 
 const EMPTY: RemoteCursor[] = [];
@@ -23,13 +28,20 @@ export function useRemoteCursors(awareness: Awareness | null): RemoteCursor[] {
       const out: RemoteCursor[] = [];
       awareness.getStates().forEach((state, clientID) => {
         if (clientID === awareness.clientID) return;
-        const user = (state.user ?? {}) as { name?: string; color?: string };
+        const user = (state.user ?? {}) as {
+          name?: string;
+          color?: string;
+          avatarUrl?: string | null;
+        };
         out.push({
           clientID,
           name: user.name ?? "Guest",
           color: user.color ?? "#8e8e93",
+          avatarUrl: user.avatarUrl ?? null,
           cursor: (state.cursor as { x: number; y: number } | null) ?? null,
           selection: (state.selection as string[]) ?? [],
+          spotlight: state.spotlight === true,
+          hasView: state.view != null,
         });
       });
       return out;

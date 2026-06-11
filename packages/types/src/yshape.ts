@@ -106,6 +106,10 @@ export interface YArrow extends YShapeBase {
   variant?: "straight" | "curved" | "elbow";
 }
 
+// Horizontal text alignment for text and sticky shapes. Optional for
+// back-compat: undefined renders left for text, center for stickies.
+export type TextAlign = "left" | "center" | "right";
+
 export interface YText extends YShapeBase {
   kind: "text";
   x: number;
@@ -117,6 +121,7 @@ export interface YText extends YShapeBase {
   font: string;
   size: number;
   color: string;
+  align?: TextAlign;
 }
 
 export interface YSticky extends YShapeBase {
@@ -129,6 +134,7 @@ export interface YSticky extends YShapeBase {
   color: string;
   content: string;
   fontSize?: number;
+  align?: TextAlign;
 }
 
 export interface YAssetRef extends YShapeBase {

@@ -10,6 +10,8 @@ export interface TextEditSession {
   font: string;
   size: number;
   color: string;
+  // Alignment of the shape being edited, so the textarea matches the render.
+  align?: "left" | "center" | "right";
 }
 
 interface TextEditStoreState {

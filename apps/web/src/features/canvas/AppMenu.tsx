@@ -3,13 +3,18 @@ import { useNavigate } from "react-router-dom";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { GlassPanel, Icon, Popover, useTheme, type IconName } from "@notux/ui";
 import {
+  BACKGROUND_PRESETS,
   exportBoardToPdf,
   useAssetStore,
   useCommandStore,
   usePageStore,
+  usePrefsStore,
+  useSettingsStore,
   useShapeStore,
   useToolStore,
 } from "@notux/canvas";
+import type { BackgroundPresetId, GridStyle } from "@notux/sync";
+import { EmbedDialog } from "./EmbedDialog";
 import { SnapshotsPanel } from "./SnapshotsPanel";
 
 interface AppMenuProps {
@@ -23,20 +28,32 @@ interface MenuItemProps {
   label: string;
   shortcut?: string;
   disabled?: boolean;
+  /** Renders a trailing checkmark (menu toggle rows). */
+  checked?: boolean;
   onClick(): void;
 }
 
-function MenuItem({ icon, label, shortcut, disabled, onClick }: MenuItemProps) {
+const GRID_OPTIONS: Array<{ id: GridStyle; icon: IconName; label: string }> = [
+  { id: "dots", icon: "grid-dots", label: "Dotted" },
+  { id: "lines", icon: "grid-lines", label: "Squared" },
+  { id: "ruled", icon: "grid-ruled", label: "Ruled" },
+  { id: "plain", icon: "grid-plain", label: "Plain" },
+];
+
+function MenuItem({ icon, label, shortcut, disabled, checked, onClick }: MenuItemProps) {
   return (
     <button
       type="button"
       className="menu__item"
       disabled={disabled}
+      role={checked !== undefined ? "menuitemcheckbox" : undefined}
+      aria-checked={checked}
       onClick={onClick}
     >
       <span className="menu__item-icon">{icon && <Icon name={icon} size={18} />}</span>
       <span className="menu__item-label">{label}</span>
       {shortcut && <span className="menu__item-shortcut">{shortcut}</span>}
+      {checked && <Icon name="check" size={14} className="menu__item-check" />}
     </button>
   );
 }
@@ -74,9 +91,15 @@ export function AppMenu({ boardId, client, owned }: AppMenuProps) {
   const [snapshotsOpen, setSnapshotsOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [embedOpen, setEmbedOpen] = useState(false);
-  const [embedUrl, setEmbedUrl] = useState("");
-  const [embedError, setEmbedError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const background = useSettingsStore((s) => s.background);
+  const grid = useSettingsStore((s) => s.grid);
+  const setBackground = useSettingsStore((s) => s.setBackground);
+  const setGrid = useSettingsStore((s) => s.setGrid);
+  const showRemoteCursors = usePrefsStore((s) => s.showRemoteCursors);
+  const setShowRemoteCursors = usePrefsStore((s) => s.setShowRemoteCursors);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
 
@@ -144,15 +167,11 @@ export function AppMenu({ boardId, client, owned }: AppMenuProps) {
     }
   }
 
-  function submitEmbed() {
-    const err = useAssetStore.getState().insertEmbed(embedUrl);
-    if (err) {
-      setEmbedError(err);
-      return;
-    }
-    setEmbedUrl("");
-    setEmbedError(null);
-    setEmbedOpen(false);
+  function copyShareLink() {
+    void navigator.clipboard?.writeText(window.location.href).then(() => {
+      setLinkCopied(true);
+      window.setTimeout(() => setLinkCopied(false), 1500);
+    });
   }
 
   function commitDrop() {
@@ -236,7 +255,6 @@ export function AppMenu({ boardId, client, owned }: AppMenuProps) {
               disabled={!canImport}
               onClick={() => {
                 setMenuOpen(false);
-                setEmbedError(null);
                 setEmbedOpen(true);
               }}
             />
@@ -248,6 +266,11 @@ export function AppMenu({ boardId, client, owned }: AppMenuProps) {
                 setMenuOpen(false);
                 setExportOpen(true);
               }}
+            />
+            <MenuItem
+              icon={linkCopied ? "check" : "link"}
+              label={linkCopied ? "Link copied" : "Copy share link"}
+              onClick={copyShareLink}
             />
             <MenuItem
               icon="history"
@@ -296,15 +319,63 @@ export function AppMenu({ boardId, client, owned }: AppMenuProps) {
               label={theme === "dark" ? "Light mode" : "Dark mode"}
               onClick={() => run(toggleTheme)}
             />
+            <div className="menu__row" role="group" aria-label="Background">
+              <span className="menu__row-label">Background</span>
+              <span className="menu__row-options">
+                {(Object.keys(BACKGROUND_PRESETS) as BackgroundPresetId[]).map(
+                  (id) => (
+                    <button
+                      key={id}
+                      type="button"
+                      className={
+                        "menu__bg-swatch" +
+                        (background === id ? " menu__bg-swatch--active" : "")
+                      }
+                      style={{ background: BACKGROUND_PRESETS[id][theme] }}
+                      onClick={() => setBackground(id)}
+                      title={BACKGROUND_PRESETS[id].label}
+                      aria-label={BACKGROUND_PRESETS[id].label}
+                      aria-pressed={background === id}
+                    />
+                  ),
+                )}
+              </span>
+            </div>
+            <div className="menu__row" role="group" aria-label="Grid">
+              <span className="menu__row-label">Grid</span>
+              <span className="menu__row-options menu__grid-seg">
+                {GRID_OPTIONS.map((g) => (
+                  <button
+                    key={g.id}
+                    type="button"
+                    className={
+                      "menu__grid-btn" +
+                      (grid === g.id ? " menu__grid-btn--active" : "")
+                    }
+                    onClick={() => setGrid(g.id)}
+                    title={g.label}
+                    aria-label={`${g.label} grid`}
+                    aria-pressed={grid === g.id}
+                  >
+                    <Icon name={g.icon} size={18} />
+                  </button>
+                ))}
+              </span>
+            </div>
+            <MenuItem
+              icon="cursors"
+              label="Show collaborator cursors"
+              checked={showRemoteCursors}
+              onClick={() => setShowRemoteCursors(!showRemoteCursors)}
+            />
           </MenuSection>
 
-          <MenuSection title="Object">
+          <MenuSection title="Arrange">
             <MenuItem icon="to-front" label="Bring to front" disabled={!hasSelection} onClick={() => run(() => zOrder("front"))} />
             <MenuItem icon="forward" label="Bring forward" disabled={!hasSelection} onClick={() => run(() => zOrder("forward"))} />
             <MenuItem icon="backward" label="Send backward" disabled={!hasSelection} onClick={() => run(() => zOrder("backward"))} />
             <MenuItem icon="to-back" label="Send to back" disabled={!hasSelection} onClick={() => run(() => zOrder("back"))} />
             <MenuItem icon="lock" label="Lock / unlock" disabled={!hasSelection} onClick={() => run(toggleLock)} />
-            <MenuItem icon="trash" label="Delete" disabled={!hasSelection} onClick={() => run(deleteSelection)} />
           </MenuSection>
         </div>
       </Popover>
@@ -407,57 +478,12 @@ export function AppMenu({ boardId, client, owned }: AppMenuProps) {
       </Popover>
 
       {/* Embed-by-URL (YouTube / Google Drive) */}
-      <Popover
+      <EmbedDialog
         open={embedOpen}
         onClose={() => setEmbedOpen(false)}
         anchorRef={menuBtnRef}
         placement="bottom"
-        className="menu-popover"
-      >
-        <div className="menu" style={{ padding: 12, minWidth: 280 }}>
-          <div className="menu__section-title">Embed a link</div>
-          <input
-            type="url"
-            value={embedUrl}
-            autoFocus
-            placeholder="Paste a YouTube or Google Drive URL"
-            onChange={(e) => {
-              setEmbedUrl(e.target.value);
-              if (embedError) setEmbedError(null);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") submitEmbed();
-            }}
-            style={{
-              width: "100%",
-              boxSizing: "border-box",
-              padding: "8px 10px",
-              borderRadius: 8,
-              border: "1px solid rgba(255,255,255,0.18)",
-              background: "rgba(0,0,0,0.25)",
-              color: "inherit",
-              outline: "none",
-              marginTop: 6,
-            }}
-          />
-          {embedError && (
-            <div style={{ color: "#ff6b6b", fontSize: 12, marginTop: 6 }}>
-              {embedError}
-            </div>
-          )}
-          <div style={{ fontSize: 11, opacity: 0.6, marginTop: 6 }}>
-            Google Drive files must be shared “anyone with the link”.
-          </div>
-          <button
-            type="button"
-            className="menu__item"
-            style={{ justifyContent: "center", marginTop: 8 }}
-            onClick={submitEmbed}
-          >
-            <span className="menu__item-label">Add to board</span>
-          </button>
-        </div>
-      </Popover>
+      />
 
       <SnapshotsPanel
         open={snapshotsOpen}

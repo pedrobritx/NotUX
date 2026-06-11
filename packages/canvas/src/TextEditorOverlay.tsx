@@ -3,6 +3,7 @@ import type { YText } from "@notux/types";
 import { newShapeId } from "./ids";
 import { useShapeStore } from "./store/shapeStore";
 import { useTextEditStore } from "./store/textEditStore";
+import { resolveInkColor } from "./theme/adaptiveInk";
 import { useToolStore } from "./store/toolStore";
 import type { ViewportState } from "./viewport/Viewport";
 
@@ -10,6 +11,8 @@ interface Props {
   viewport: ViewportState;
   pageId: string;
   authorId: string;
+  // Matches the canvas's adaptive-ink rendering so editing is WYSIWYG.
+  darkCanvas?: boolean;
 }
 
 // HTML <textarea> floated over the Konva stage. Lifecycle:
@@ -18,7 +21,12 @@ interface Props {
 //      and grabs focus.
 //   3. On blur or Enter (without Shift) it commits a YText to the store.
 //   4. Escape cancels without committing.
-export function TextEditorOverlay({ viewport, pageId, authorId }: Props) {
+export function TextEditorOverlay({
+  viewport,
+  pageId,
+  authorId,
+  darkCanvas = false,
+}: Props) {
   const session = useTextEditStore((s) => s.session);
   const endSession = useTextEditStore((s) => s.end);
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -89,7 +97,8 @@ export function TextEditorOverlay({ viewport, pageId, authorId }: Props) {
         width: session.width * viewport.scale,
         minHeight: session.size * viewport.scale * 1.5,
         font: `${session.size * viewport.scale}px ${session.font}`,
-        color: session.color,
+        color: resolveInkColor(session.color, darkCanvas),
+        textAlign: session.align ?? "left",
         background: "rgba(0,0,0,0.35)",
         border: "1px solid rgba(90,200,250,0.6)",
         borderRadius: 6,
