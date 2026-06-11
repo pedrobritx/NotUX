@@ -56,6 +56,7 @@ export function makeRectTool(): Tool {
         radius: cornerRadius(ctx.options.shapeVariant, r.w, r.h),
         stroke: ctx.options.color,
         fill: ctx.options.fill,
+        strokeWidth: ctx.options.size,
       };
       ctx.store.transact(() => ctx.store.addShape(ctx.pageId, shape));
     },

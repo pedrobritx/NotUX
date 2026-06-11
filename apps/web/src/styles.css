@@ -424,6 +424,36 @@ a {
   border-top: 1px solid var(--glass-stroke);
 }
 
+.selection-inspector__thickness {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex: 1;
+}
+
+.selection-inspector__thickness-btn {
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--segment-bg);
+  color: var(--fg-0);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 140ms ease;
+}
+
+.selection-inspector__thickness-btn:hover {
+  background: var(--glass-hover);
+}
+
+.selection-inspector__thickness-btn--active {
+  background: var(--preset-active-bg);
+  color: var(--preset-active-fg);
+}
+
 .selection-inspector__btn {
   appearance: none;
   height: 30px;

@@ -56,6 +56,7 @@ export function makePolygonTool(): Tool {
         rot: 0,
         stroke: ctx.options.color,
         fill: ctx.options.fill,
+        strokeWidth: ctx.options.size,
       };
       ctx.store.transact(() => ctx.store.addShape(ctx.pageId, shape));
     },

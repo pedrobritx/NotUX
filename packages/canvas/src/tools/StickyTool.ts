@@ -43,16 +43,20 @@ export function makeStickyTool(): Tool {
     };
     ctx.store.transact(() => ctx.store.addShape(ctx.pageId, shape));
 
-    // Open the text editor anchored to the note's text area.
+    // Open the inline sticky editor (FigJam-style) anchored over the note.
     useTextEditStore.getState().begin({
       editingId: shape.id,
-      worldX: x + PAD,
-      worldY: y + PAD,
-      width: Math.max(40, w - PAD * 2),
+      worldX: x,
+      worldY: y,
+      width: w,
       initial: "",
       font: FONT,
       size: FONT_SIZE,
       color: "#1c1c1e",
+      mode: "sticky",
+      stickyColor: ctx.options.stickyColor,
+      stickyW: w,
+      stickyH: h,
     });
   }
 

@@ -815,6 +815,146 @@ input:focus-visible {
   flex-wrap: wrap;
 }
 
+/* Minimalist color picker variant. */
+.color-picker--mini {
+  width: min(280px, calc(100vw - 24px));
+}
+
+/* Compact swatch palette row (shared by ColorPicker + SelectionInspector). */
+.color-palette-mini {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.color-picker__hex-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.color-picker__hex-label {
+  font-weight: 600;
+  color: var(--fg-1);
+  width: 14px;
+}
+
+.color-picker__hex-input {
+  flex: 1;
+  background: var(--field-bg);
+  border: 1px solid var(--glass-stroke);
+  color: var(--fg-0);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
+.color-picker__preview {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--swatch-stroke);
+  flex: none;
+}
+
+.color-picker__save-btn {
+  appearance: none;
+  border: 1px solid var(--glass-stroke);
+  background: var(--segment-bg);
+  color: var(--fg-1);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 140ms ease;
+}
+
+.color-picker__save-btn:hover {
+  background: var(--glass-hover);
+  color: var(--fg-0);
+}
+
+/* ----- Text formatting toolbar ------------------------------------------ */
+
+.text-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+  margin-bottom: 4px;
+  border-radius: 10px;
+  background: var(--popover-bg);
+  border: 1px solid var(--glass-stroke);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.text-toolbar__btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--fg-0);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 120ms ease;
+}
+
+.text-toolbar__btn:hover {
+  background: var(--glass-hover);
+}
+
+.text-toolbar__btn--active {
+  background: var(--preset-active-bg);
+  color: var(--preset-active-fg);
+}
+
+.text-toolbar__btn--italic {
+  font-style: italic;
+}
+
+.text-toolbar__btn--underline {
+  text-decoration: underline;
+}
+
+.text-toolbar__divider {
+  width: 1px;
+  height: 18px;
+  margin: 0 3px;
+  background: var(--glass-stroke);
+}
+
+.text-toolbar__select {
+  appearance: none;
+  border: 1px solid var(--glass-stroke);
+  background: var(--field-bg);
+  color: var(--fg-0);
+  border-radius: 6px;
+  padding: 3px 6px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  max-width: 80px;
+}
+
+.text-toolbar__select--size {
+  max-width: 48px;
+  text-align: center;
+}
+
 /* ----- App menu (top-left) ----------------------------------------------- */
 
 .app-menu {

@@ -57,6 +57,8 @@ export interface YRect extends YShapeBase {
   // Corner radius in world units. undefined / 0 renders a sharp rectangle;
   // the "rounded square" shape sets this.
   radius?: number;
+  // Stroke thickness in world units. undefined defaults to 2 (back-compat).
+  strokeWidth?: number;
 }
 
 // Diamond and triangle share the drag-out box geometry of YRect; the `variant`
@@ -71,6 +73,8 @@ export interface YPolygon extends YShapeBase {
   rot: number;
   stroke: string;
   fill: string | null;
+  // Stroke thickness in world units. undefined defaults to 2 (back-compat).
+  strokeWidth?: number;
 }
 
 export interface YEllipse extends YShapeBase {
@@ -82,6 +86,8 @@ export interface YEllipse extends YShapeBase {
   rot: number;
   stroke: string;
   fill: string | null;
+  // Stroke thickness in world units. undefined defaults to 2 (back-compat).
+  strokeWidth?: number;
 }
 
 export interface YLine extends YShapeBase {
@@ -121,6 +127,11 @@ export interface YText extends YShapeBase {
   font: string;
   size: number;
   color: string;
+  // Block-level formatting (applies to the entire text). Optional for
+  // back-compat with text authored before rich-text support.
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
   align?: TextAlign;
 }
 

@@ -2,7 +2,8 @@ import { useMemo } from "react";
 import type { TextAlign, YShape } from "@notux/types";
 import { Icon, type IconName } from "@notux/ui";
 import { useShapeStore, useToolStore } from "@notux/canvas";
-import { COLORS } from "./palette";
+import { Swatch } from "@notux/ui";
+import { COLORS, THICKNESS_PRESETS } from "./palette";
 
 const ALIGN_OPTIONS: Array<{ id: TextAlign; icon: IconName; label: string }> = [
   { id: "left", icon: "align-left", label: "Align left" },
@@ -47,6 +48,36 @@ function colorPatch(s: YShape, color: string): Partial<YShape> | null {
       return { color };
     case "asset":
     case "embed":
+      return null;
+  }
+}
+
+// Read the stroke thickness from any shape that has one.
+function shapeThickness(s: YShape): number | undefined {
+  switch (s.kind) {
+    case "rect":
+    case "ellipse":
+    case "polygon":
+      return s.strokeWidth ?? 2;
+    case "line":
+    case "arrow":
+      return s.width;
+    default:
+      return undefined;
+  }
+}
+
+// Build a patch to set stroke thickness for a given shape kind.
+function thicknessPatch(s: YShape, thickness: number): Partial<YShape> | null {
+  switch (s.kind) {
+    case "rect":
+    case "ellipse":
+    case "polygon":
+      return { strokeWidth: thickness };
+    case "line":
+    case "arrow":
+      return { width: thickness };
+    default:
       return null;
   }
 }
@@ -102,6 +133,9 @@ export function SelectionInspector({ pageId }: Props) {
   const hasColor = selected.some((s) => shapeColor(s) !== undefined);
   const fillShapes = selected.filter(isFillKind);
   const textShapes = selected.filter((s) => s.kind === "text");
+  const thicknessShapes = selected.filter(
+    (s) => shapeThickness(s) !== undefined,
+  );
   const alignShapes = selected.filter(
     (s) => s.kind === "text" || s.kind === "sticky",
   );
@@ -114,6 +148,7 @@ export function SelectionInspector({ pageId }: Props) {
   const currentSize = shared(textShapes, (s) =>
     s.kind === "text" ? s.size : undefined,
   );
+  const currentThickness = shared(thicknessShapes, shapeThickness);
   const currentAlign = shared(alignShapes, (s) =>
     s.kind === "text"
       ? (s.align ?? "left")
@@ -132,54 +167,45 @@ export function SelectionInspector({ pageId }: Props) {
       role="region"
       aria-label="Selection properties"
     >
+      {/* Color row — minimalist swatch palette */}
       {hasColor && (
         <div className="selection-inspector__row selection-inspector__row--swatches">
           {COLORS.map((c) => (
-            <button
+            <Swatch
               key={c}
-              type="button"
-              className={
-                "tool-palette__swatch" +
-                (currentColor === c ? " tool-palette__swatch--active" : "")
-              }
-              style={{ background: c }}
+              color={c}
+              size={22}
+              selected={currentColor === c}
               onClick={() => patchEach((s) => colorPatch(s, c))}
-              title={c}
               aria-label={`Stroke ${c}`}
             />
           ))}
         </div>
       )}
 
+      {/* Fill row */}
       {fillShapes.length > 0 && (
         <div className="selection-inspector__row">
           <span className="selection-inspector__label">Fill</span>
           <div className="selection-inspector__swatches">
-            <button
-              type="button"
-              className={
-                "tool-palette__swatch selection-inspector__none" +
-                (currentFill === null ? " tool-palette__swatch--active" : "")
-              }
+            <Swatch
+              color="none"
+              size={22}
+              selected={currentFill === null}
               onClick={() =>
                 patchEach((s) => (isFillKind(s) ? { fill: null } : null))
               }
-              title="No fill"
               aria-label="No fill"
             />
             {COLORS.map((c) => (
-              <button
+              <Swatch
                 key={c}
-                type="button"
-                className={
-                  "tool-palette__swatch" +
-                  (currentFill === c ? " tool-palette__swatch--active" : "")
-                }
-                style={{ background: c }}
+                color={c}
+                size={22}
+                selected={currentFill === c}
                 onClick={() =>
                   patchEach((s) => (isFillKind(s) ? { fill: c } : null))
                 }
-                title={c}
                 aria-label={`Fill ${c}`}
               />
             ))}
@@ -187,6 +213,58 @@ export function SelectionInspector({ pageId }: Props) {
         </div>
       )}
 
+      {/* Thickness row */}
+      {thicknessShapes.length > 0 && (
+        <div className="selection-inspector__row">
+          <span className="selection-inspector__label">Thickness</span>
+          <div className="selection-inspector__thickness">
+            {THICKNESS_PRESETS.map((t) => (
+              <button
+                key={t}
+                type="button"
+                className={
+                  "selection-inspector__thickness-btn" +
+                  (currentThickness === t
+                    ? " selection-inspector__thickness-btn--active"
+                    : "")
+                }
+                onClick={() => patchEach((s) => thicknessPatch(s, t))}
+                aria-label={`Thickness ${t}`}
+                aria-pressed={currentThickness === t}
+              >
+                <svg width={20} height={20} viewBox="0 0 20 20" aria-hidden>
+                  <line
+                    x1={3}
+                    y1={10}
+                    x2={17}
+                    y2={10}
+                    stroke="currentColor"
+                    strokeWidth={Math.max(1, Math.min(6, t * 0.8))}
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            ))}
+            <input
+              className="selection-inspector__num"
+              type="number"
+              min={1}
+              max={50}
+              value={typeof currentThickness === "number" ? currentThickness : ""}
+              placeholder={currentThickness === "mixed" ? "—" : ""}
+              onChange={(e) => {
+                const n = Number(e.target.value);
+                if (Number.isFinite(n) && n > 0) {
+                  patchEach((s) => thicknessPatch(s, n));
+                }
+              }}
+              aria-label="Stroke thickness"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Opacity row */}
       <div className="selection-inspector__row">
         <span className="selection-inspector__label">Opacity</span>
         <input
@@ -232,6 +310,7 @@ export function SelectionInspector({ pageId }: Props) {
         </div>
       )}
 
+      {/* Text size row */}
       {textShapes.length > 0 && (
         <div className="selection-inspector__row">
           <span className="selection-inspector__label">Size</span>
@@ -252,6 +331,7 @@ export function SelectionInspector({ pageId }: Props) {
         </div>
       )}
 
+      {/* Z-order actions */}
       <div className="selection-inspector__row selection-inspector__actions">
         <button
           type="button"

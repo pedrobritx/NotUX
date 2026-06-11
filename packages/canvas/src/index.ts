@@ -28,5 +28,7 @@ export {
 } from "./store/dockStore";
 export type { InstrumentId, DockPosition } from "./store/dockStore";
 export type { ShapeStore } from "./store/shapeStore";
+export { useTextEditStore } from "./store/textEditStore";
+export type { TextEditSession } from "./store/textEditStore";
 export { exportBoardToPdf } from "./export/exportBoardToPdf";
 export type { ExportOptions, ExportPage } from "./export/exportBoardToPdf";

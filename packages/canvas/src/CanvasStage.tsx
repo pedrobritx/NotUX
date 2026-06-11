@@ -27,6 +27,7 @@ import { useShapeStore } from "./store/shapeStore";
 import { useTextEditStore } from "./store/textEditStore";
 import { useToolStore } from "./store/toolStore";
 import { TextEditorOverlay } from "./TextEditorOverlay";
+import { StickyEditorOverlay } from "./StickyEditorOverlay";
 import { MediaOverlayLayer } from "./MediaOverlayLayer";
 import { makeTool } from "./tools/registry";
 import { boundsIntersect, shapeBounds } from "./tools/shapeOps";
@@ -371,6 +372,9 @@ export function CanvasStage({
     (evt: React.PointerEvent<HTMLDivElement>) => {
       const native = evt.nativeEvent;
       breakFollow();
+      // Let clicks on text inputs/textareas (e.g. TextEditorOverlay) through
+      // without capturing — otherwise the canvas steals focus from them.
+      if (isTypingTarget(native.target)) return;
       if (native.button === 1 || spaceHeld || tool === "hand") {
         evt.preventDefault();
         panRef.current = { active: true, lastX: native.clientX, lastY: native.clientY };
@@ -514,17 +518,20 @@ export function CanvasStage({
           align: hit.align ?? "left",
         });
       } else if (hit && hit.kind === "sticky" && !hit.locked) {
-        const pad = 14;
         useTextEditStore.getState().begin({
           editingId: hit.id,
-          worldX: hit.x + pad,
-          worldY: hit.y + pad,
-          width: Math.max(40, hit.w - pad * 2),
+          worldX: hit.x,
+          worldY: hit.y,
+          width: Math.max(40, hit.w),
           initial: hit.content,
           font: "-apple-system, system-ui, sans-serif",
           size: hit.fontSize ?? 18,
           color: "#1c1c1e",
           align: hit.align ?? "center",
+          mode: "sticky",
+          stickyColor: hit.color,
+          stickyW: hit.w,
+          stickyH: hit.h,
         });
       }
     },
@@ -617,6 +624,10 @@ export function CanvasStage({
         pageId={pageId}
         authorId={authorIdRef.current}
         darkCanvas={darkCanvas}
+      />
+      <StickyEditorOverlay
+        viewport={viewport}
+        pageId={pageId}
       />
     </div>
   );

@@ -8,6 +8,14 @@ interface Props {
   darkCanvas?: boolean;
 }
 
+// Build Konva fontStyle from bold/italic flags.
+function fontStyle(shape: YText): string | undefined {
+  const parts: string[] = [];
+  if (shape.bold) parts.push("bold");
+  if (shape.italic) parts.push("italic");
+  return parts.length > 0 ? parts.join(" ") : undefined;
+}
+
 export function TextRenderer({ shape, selected, darkCanvas = false }: Props) {
   // Local coords; the ShapesLayer Group carries x/y/rotation.
   return (
@@ -18,8 +26,10 @@ export function TextRenderer({ shape, selected, darkCanvas = false }: Props) {
       text={shape.content}
       fontFamily={shape.font}
       fontSize={shape.size}
-      fill={resolveInkColor(shape.color, darkCanvas)}
+      fontStyle={fontStyle(shape)}
+      textDecoration={shape.underline ? "underline" : undefined}
       align={shape.align ?? "left"}
+      fill={resolveInkColor(shape.color, darkCanvas)}
       shadowColor={selected ? "#5ac8fa" : undefined}
       shadowBlur={selected ? 12 : 0}
       shadowOpacity={selected ? 0.9 : 0}

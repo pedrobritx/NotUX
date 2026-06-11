@@ -24,7 +24,7 @@ export function PolygonRenderer({ shape, selected, darkCanvas = false }: Props) 
       points={polygonPoints(shape.variant, shape.w, shape.h)}
       closed
       stroke={resolveInkColor(shape.stroke, darkCanvas)}
-      strokeWidth={2}
+      strokeWidth={shape.strokeWidth ?? 2}
       lineJoin="round"
       fill={shape.fill ?? undefined}
       shadowColor={selected ? "#5ac8fa" : undefined}
