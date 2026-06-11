@@ -11,6 +11,7 @@ export { useCommandStore } from "./store/commandStore";
 export { useAssetStore } from "./store/assetStore";
 export { useSettingsStore } from "./store/settingsStore";
 export { usePrefsStore } from "./store/prefsStore";
+export { useFollowStore } from "./store/followStore";
 export {
   BACKGROUND_PRESETS,
   effectiveBackground,

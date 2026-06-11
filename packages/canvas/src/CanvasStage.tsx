@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Stage } from "react-konva";
 import { newAuthorId } from "./ids";
 import { useAwareness } from "./hooks/useAwareness";
+import { useFollowViewport } from "./hooks/useFollowViewport";
 import { useUndoManager } from "./hooks/useUndoManager";
+import { useFollowStore } from "./store/followStore";
 import { BackgroundLayer } from "./layers/BackgroundLayer";
 import { OverlayLayer } from "./layers/OverlayLayer";
 import { PresenceLayer } from "./layers/PresenceLayer";
@@ -88,6 +90,8 @@ export function CanvasStage({
   // them. Re-registers when handlers or canvas size change.
   const sizeRef = useRef(size);
   sizeRef.current = size;
+  const viewportRef = useRef(viewport);
+  viewportRef.current = viewport;
   useEffect(() => {
     const zoomBy = (factor: number) =>
       setViewport((v) =>
@@ -103,6 +107,49 @@ export function CanvasStage({
       zoomReset: () => setViewport((v) => ({ ...v, scale: 1 })),
     });
   }, [undo, redo, canUndo, canRedo]);
+
+  // ----- Spotlight / follow mode -------------------------------------------
+  const spotlighting = useFollowStore((s) => s.spotlighting);
+  const followingClientID = useFollowStore((s) => s.followingClientID);
+  useFollowViewport({ awareness, setViewport, sizeRef });
+
+  // Publish our spotlight flag so peers auto-follow while we present.
+  useEffect(() => {
+    if (!awareness) return;
+    awareness.setLocalStateField("spotlight", spotlighting ? true : null);
+  }, [awareness, spotlighting]);
+
+  // Publish our view (world-space screen centre + scale) at ~10 Hz so peers
+  // can follow us. Skipped while we ourselves follow someone — a follower's
+  // view is never consumed and would just flood the channel.
+  const viewTimerRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!awareness || followingClientID !== null) return;
+    if (viewTimerRef.current !== null) return; // trailing-edge throttle
+    viewTimerRef.current = window.setTimeout(() => {
+      viewTimerRef.current = null;
+      const v = viewportRef.current;
+      const s = sizeRef.current;
+      awareness.setLocalStateField("view", {
+        cx: (s.w / 2 - v.x) / v.scale,
+        cy: (s.h / 2 - v.y) / v.scale,
+        scale: v.scale,
+      });
+    }, 100);
+  }, [awareness, viewport, size, followingClientID]);
+  useEffect(() => {
+    return () => {
+      if (viewTimerRef.current !== null) window.clearTimeout(viewTimerRef.current);
+    };
+  }, []);
+
+  // Any manual viewport gesture breaks follow mode (and suppresses auto
+  // re-follow until that presenter re-toggles their spotlight).
+  const breakFollow = useCallback(() => {
+    if (useFollowStore.getState().followingClientID !== null) {
+      useFollowStore.getState().stopFollowing(true);
+    }
+  }, []);
 
   // Publish the local cursor (world coords) to awareness, throttled to one
   // update per animation frame so rapid pointer moves don't flood the channel.
@@ -294,6 +341,10 @@ export function CanvasStage({
     return () => {
       if (cursorRafRef.current !== null) cancelAnimationFrame(cursorRafRef.current);
       awareness?.setLocalStateField("cursor", null);
+      awareness?.setLocalStateField("view", null);
+      awareness?.setLocalStateField("spotlight", null);
+      useFollowStore.getState().stopFollowing();
+      useFollowStore.getState().setSpotlighting(false);
     };
   }, [awareness]);
 
@@ -319,6 +370,7 @@ export function CanvasStage({
   const onPointerDown = useCallback(
     (evt: React.PointerEvent<HTMLDivElement>) => {
       const native = evt.nativeEvent;
+      breakFollow();
       if (native.button === 1 || spaceHeld || tool === "hand") {
         evt.preventDefault();
         panRef.current = { active: true, lastX: native.clientX, lastY: native.clientY };
@@ -342,7 +394,7 @@ export function CanvasStage({
       evt.currentTarget.setPointerCapture(native.pointerId);
       toolRef.current.onPointerDown(pointerToToolPoint(native), buildToolContext());
     },
-    [spaceHeld, tool, viewport, buildToolContext],
+    [spaceHeld, tool, viewport, buildToolContext, breakFollow],
   );
 
   const onPointerMove = useCallback(
@@ -389,6 +441,7 @@ export function CanvasStage({
   const onWheel = useCallback((evt: React.WheelEvent<HTMLDivElement>) => {
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
+    breakFollow();
     const sx = evt.clientX - rect.left;
     const sy = evt.clientY - rect.top;
     if (evt.ctrlKey || evt.metaKey) {
@@ -401,7 +454,7 @@ export function CanvasStage({
         y: v.y - evt.deltaY * PAN_PER_WHEEL_PIXEL,
       }));
     }
-  }, []);
+  }, [breakFollow]);
 
   // File drag-and-drop import. dragover must preventDefault for drop to fire.
   const onDragOver = useCallback((evt: React.DragEvent<HTMLDivElement>) => {

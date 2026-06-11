@@ -9,12 +9,13 @@ import {
 } from "@notux/canvas";
 import { useTheme } from "@notux/ui";
 import { AppMenu } from "../features/canvas/AppMenu";
+import { CollabBar } from "../features/canvas/CollabBar";
 import { Dock } from "../features/canvas/Dock";
+import { FollowPill } from "../features/canvas/FollowPill";
 import { SaveStatus } from "../features/canvas/SaveStatus";
 import { SelectionInspector } from "../features/canvas/SelectionInspector";
 import { useIdentity } from "../features/canvas/useIdentity";
 import { ensureBoardOwnership } from "../features/board/boardOwnership";
-import { BoardAccessIndicator } from "../features/board/BoardAccessIndicator";
 import { getSupabase } from "../lib/supabase";
 
 export default function Board() {
@@ -84,12 +85,14 @@ export default function Board() {
     <div className="board">
       <CanvasStage boardId={boardId!} pageId={activePageId} theme={theme} />
       <AppMenu boardId={boardId!} client={client} owned={owned} />
-      <BoardAccessIndicator
-        client={client}
+      <CollabBar
         boardId={boardId!}
+        client={client}
         owned={owned}
         isPublic={isPublic}
+        identity={identity}
       />
+      <FollowPill />
       <Dock />
       <SelectionInspector pageId={activePageId} />
       <SaveStatus />

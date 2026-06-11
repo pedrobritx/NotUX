@@ -20,7 +20,7 @@ import {
 // works fully against IndexedDB.
 export interface RealtimeConfig {
   client: SupabaseClient;
-  identity: { name: string; color: string };
+  identity: { name: string; color: string; avatarUrl?: string | null };
 }
 
 // One promise per boardId — concurrent callers for the same board share the
@@ -181,6 +181,7 @@ export const useShapeStore = create<ShapeStoreState>((set, get) => ({
         awareness.setLocalStateField("user", {
           name: cfg.identity.name,
           color: cfg.identity.color,
+          avatarUrl: cfg.identity.avatarUrl ?? null,
         });
         getSupabaseProvider({ client: cfg.client, boardId, doc, awareness });
         set({ _awareness: awareness });
