@@ -14,8 +14,11 @@ interface Props {
   onClose(): void;
   /** Element the popover floats above (or below). */
   anchorRef: RefObject<HTMLElement>;
-  placement?: "top" | "bottom";
-  /** Draw a speech-bubble tail pointing at the anchor (top placement only). */
+  /** "auto" opens toward the larger half of the viewport (anchor in the top
+   *  half → below, bottom half → above) so dock menus stay visible wherever
+   *  the dock is dragged. */
+  placement?: "top" | "bottom" | "auto";
+  /** Draw a speech-bubble tail pointing at the anchor. */
   tail?: boolean;
   className?: string;
   children?: ReactNode;
@@ -34,10 +37,16 @@ export function Popover({
   children,
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState<{ left: number; top: number; tailX: number }>({
+  const [pos, setPos] = useState<{
+    left: number;
+    top: number;
+    tailX: number;
+    resolved: "top" | "bottom";
+  }>({
     left: -9999,
     top: -9999,
     tailX: 0,
+    resolved: placement === "auto" ? "bottom" : placement,
   });
 
   const reposition = useCallback(() => {
@@ -49,9 +58,14 @@ export function Popover({
     const anchorCenter = a.left + a.width / 2;
     let left = anchorCenter - r.width / 2;
     left = Math.max(MARGIN, Math.min(left, window.innerWidth - r.width - MARGIN));
-    const top =
-      placement === "top" ? a.top - r.height - 12 : a.bottom + 12;
-    setPos({ left, top, tailX: anchorCenter - left });
+    const resolved: "top" | "bottom" =
+      placement === "auto"
+        ? a.top + a.height / 2 < window.innerHeight / 2
+          ? "bottom"
+          : "top"
+        : placement;
+    const top = resolved === "top" ? a.top - r.height - 12 : a.bottom + 12;
+    setPos({ left, top, tailX: anchorCenter - left, resolved });
   }, [anchorRef, placement]);
 
   useLayoutEffect(() => {
@@ -95,13 +109,15 @@ export function Popover({
 
   const cls =
     "glass-popover" +
-    (tail && placement === "top" ? " glass-popover--tail-bottom" : "") +
+    (tail && pos.resolved === "top" ? " glass-popover--tail-bottom" : "") +
+    (tail && pos.resolved === "bottom" ? " glass-popover--tail-top" : "") +
     (className ? ` ${className}` : "");
 
   return createPortal(
     <div
       ref={ref}
       className={cls}
+      data-placement={pos.resolved}
       style={
         {
           left: pos.left,

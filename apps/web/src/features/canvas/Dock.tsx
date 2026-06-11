@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties, type Ref } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type Ref } from "react";
 import {
   GlassPanel,
   Icon,
@@ -12,11 +12,13 @@ import type { ToolKind } from "@notux/types";
 import {
   PEN_STYLES,
   WIDTH_PRESETS,
+  useAssetStore,
   useDockStore,
   useToolStore,
   type InstrumentId,
 } from "@notux/canvas";
 import { ColorPicker } from "./ColorPicker";
+import { EmbedDialog } from "./EmbedDialog";
 
 // Tools that count as "a shape" for the Shapes button's active state.
 const SHAPE_TOOLS: ReadonlySet<ToolKind> = new Set([
@@ -119,6 +121,7 @@ export function Dock() {
   const shapesFlyoutOpen = useDockStore((s) => s.shapesFlyoutOpen);
   const stickyPopoverOpen = useDockStore((s) => s.stickyPopoverOpen);
   const colorPickerOpen = useDockStore((s) => s.colorPickerOpen);
+  const importPopoverOpen = useDockStore((s) => s.importPopoverOpen);
 
   const selectInstrument = useDockStore((s) => s.selectInstrument);
   const setPenStyle = useDockStore((s) => s.setPenStyle);
@@ -131,7 +134,11 @@ export function Dock() {
   const setShapesFlyoutOpen = useDockStore((s) => s.setShapesFlyoutOpen);
   const setStickyPopoverOpen = useDockStore((s) => s.setStickyPopoverOpen);
   const setColorPickerOpen = useDockStore((s) => s.setColorPickerOpen);
+  const setImportPopoverOpen = useDockStore((s) => s.setImportPopoverOpen);
   const closeAllPopovers = useDockStore((s) => s.closeAllPopovers);
+
+  const canImport = useAssetStore((s) => s.canImport);
+  const [embedOpen, setEmbedOpen] = useState(false);
 
   const tool = useToolStore((s) => s.tool);
   const eraserMode = useToolStore((s) => s.options.eraserMode);
@@ -146,7 +153,11 @@ export function Dock() {
   const shapesBtnRef = useRef<HTMLButtonElement>(null);
   const stickyBtnRef = useRef<HTMLButtonElement>(null);
   const colorBtnRef = useRef<HTMLSpanElement>(null);
+  const importBtnRef = useRef<HTMLButtonElement>(null);
   const collapsedRef = useRef<HTMLButtonElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const audioInputRef = useRef<HTMLInputElement>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
 
   // The brush popover (width + opacity, plus pen styles) anchors to whichever
   // brush tool is active.
@@ -194,6 +205,24 @@ export function Dock() {
     ? { left: position.x, top: position.y, bottom: "auto", transform: "none" }
     : undefined;
 
+  // Whether the dock currently sits in the top half of the viewport (the
+  // default). Drives collapse-chevron direction; popovers flip on their own.
+  const inTopHalf =
+    position === null ||
+    (typeof window !== "undefined" && position.y < window.innerHeight / 2);
+
+  function onImportFiles(files: FileList | null, input: HTMLInputElement) {
+    if (files && files.length > 0) {
+      void useAssetStore.getState().importAtCenter(files);
+    }
+    input.value = "";
+  }
+
+  function importRow(input: HTMLInputElement | null) {
+    setImportPopoverOpen(false);
+    input?.click();
+  }
+
   if (collapsed) {
     return (
       <button
@@ -205,7 +234,7 @@ export function Dock() {
         title="Show tools"
         aria-label="Show tools"
       >
-        <Icon name="chevron-up" />
+        <Icon name={inTopHalf ? "chevron-down" : "chevron-up"} />
       </button>
     );
   }
@@ -230,20 +259,20 @@ export function Dock() {
         </span>
 
         <ToolButton
-          icon="select"
-          label="Select"
-          active={tool === "select"}
-          onClick={() => {
-            useToolStore.getState().setTool("select");
-            closeAllPopovers();
-          }}
-        />
-        <ToolButton
           icon="hand"
           label="Hand (pan)"
           active={tool === "hand"}
           onClick={() => {
             useToolStore.getState().setTool("hand");
+            closeAllPopovers();
+          }}
+        />
+        <ToolButton
+          icon="select"
+          label="Select"
+          active={tool === "select"}
+          onClick={() => {
+            useToolStore.getState().setTool("select");
             closeAllPopovers();
           }}
         />
@@ -261,16 +290,6 @@ export function Dock() {
           }}
         />
         <ToolButton
-          innerRef={eraserBtnRef}
-          icon="eraser"
-          label="Eraser"
-          active={tool === "eraser"}
-          onClick={() => {
-            if (tool === "eraser") setEraserPopoverOpen(!eraserPopoverOpen);
-            else selectInstrument("eraser");
-          }}
-        />
-        <ToolButton
           innerRef={highlighterBtnRef}
           icon="highlighter"
           label="Highlighter"
@@ -281,6 +300,19 @@ export function Dock() {
           }}
         />
         <ToolButton
+          innerRef={eraserBtnRef}
+          icon="eraser"
+          label="Eraser"
+          active={tool === "eraser"}
+          onClick={() => {
+            if (tool === "eraser") setEraserPopoverOpen(!eraserPopoverOpen);
+            else selectInstrument("eraser");
+          }}
+        />
+
+        <span className="dock__divider" />
+
+        <ToolButton
           icon="text"
           label="Text"
           active={tool === "text"}
@@ -288,14 +320,6 @@ export function Dock() {
             useToolStore.getState().setTool("text");
             closeAllPopovers();
           }}
-        />
-        <ToolButton
-          innerRef={shapesBtnRef}
-          icon="shapes"
-          label="Shapes"
-          active={SHAPE_TOOLS.has(tool)}
-          chevron
-          onClick={() => setShapesFlyoutOpen(!shapesFlyoutOpen)}
         />
         <ToolButton
           innerRef={stickyBtnRef}
@@ -311,6 +335,14 @@ export function Dock() {
             }
           }}
         />
+        <ToolButton
+          innerRef={shapesBtnRef}
+          icon="shapes"
+          label="Shapes"
+          active={SHAPE_TOOLS.has(tool)}
+          chevron
+          onClick={() => setShapesFlyoutOpen(!shapesFlyoutOpen)}
+        />
 
         <span className="dock__divider" />
 
@@ -325,6 +357,15 @@ export function Dock() {
           />
         </span>
 
+        <ToolButton
+          innerRef={importBtnRef}
+          icon="media"
+          label="Insert media"
+          active={importPopoverOpen}
+          chevron
+          onClick={() => setImportPopoverOpen(!importPopoverOpen)}
+        />
+
         <span className="dock__divider" />
 
         <button
@@ -334,7 +375,7 @@ export function Dock() {
           title="Hide tools"
           aria-label="Hide tools"
         >
-          <Icon name="chevron-down" size={18} />
+          <Icon name={inTopHalf ? "chevron-up" : "chevron-down"} size={18} />
         </button>
       </GlassPanel>
 
@@ -343,7 +384,7 @@ export function Dock() {
         open={penPopoverOpen && (tool === "pen" || tool === "highlighter")}
         onClose={() => setPenPopoverOpen(false)}
         anchorRef={brushAnchor}
-        placement="top"
+        placement="auto"
         tail
       >
         {isPenFamily && (
@@ -394,7 +435,7 @@ export function Dock() {
         open={eraserPopoverOpen && tool === "eraser"}
         onClose={() => setEraserPopoverOpen(false)}
         anchorRef={eraserBtnRef}
-        placement="top"
+        placement="auto"
         tail
       >
         <div className="eraser-popover">
@@ -431,7 +472,7 @@ export function Dock() {
         open={shapesFlyoutOpen}
         onClose={() => setShapesFlyoutOpen(false)}
         anchorRef={shapesBtnRef}
-        placement="top"
+        placement="auto"
         tail
       >
         <div className="shapes-flyout">
@@ -455,7 +496,7 @@ export function Dock() {
         open={stickyPopoverOpen && tool === "sticky"}
         onClose={() => setStickyPopoverOpen(false)}
         anchorRef={stickyBtnRef}
-        placement="top"
+        placement="auto"
         tail
       >
         <div className="sticky-colors">
@@ -477,6 +518,115 @@ export function Dock() {
         onClose={() => setColorPickerOpen(false)}
         anchorRef={colorBtnRef}
       />
+
+      {/* Import / embed menu. */}
+      <Popover
+        open={importPopoverOpen}
+        onClose={() => setImportPopoverOpen(false)}
+        anchorRef={importBtnRef}
+        placement="auto"
+        tail
+        className="menu-popover"
+      >
+        <div className="menu" role="menu" style={{ width: 220 }}>
+          <div className="menu__section-title">Import</div>
+          <MediaMenuItem
+            icon="photo"
+            label="Image…"
+            disabled={!canImport}
+            onClick={() => importRow(imageInputRef.current)}
+          />
+          <MediaMenuItem
+            icon="file"
+            label="PDF…"
+            disabled={!canImport}
+            onClick={() => importRow(pdfInputRef.current)}
+          />
+          <MediaMenuItem
+            icon="audio"
+            label="Audio…"
+            disabled={!canImport}
+            onClick={() => importRow(audioInputRef.current)}
+          />
+          <div className="menu__section-title" style={{ marginTop: 6 }}>
+            Embed
+          </div>
+          <MediaMenuItem
+            icon="video"
+            label="YouTube video…"
+            disabled={!canImport}
+            onClick={() => {
+              setImportPopoverOpen(false);
+              setEmbedOpen(true);
+            }}
+          />
+          <MediaMenuItem
+            icon="folder"
+            label="Google Drive…"
+            disabled={!canImport}
+            onClick={() => {
+              setImportPopoverOpen(false);
+              setEmbedOpen(true);
+            }}
+          />
+        </div>
+      </Popover>
+
+      <EmbedDialog
+        open={embedOpen}
+        onClose={() => setEmbedOpen(false)}
+        anchorRef={importBtnRef}
+        placement="auto"
+      />
+
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        style={{ display: "none" }}
+        onChange={(e) => onImportFiles(e.target.files, e.target)}
+      />
+      <input
+        ref={audioInputRef}
+        type="file"
+        accept="audio/*"
+        multiple
+        style={{ display: "none" }}
+        onChange={(e) => onImportFiles(e.target.files, e.target)}
+      />
+      <input
+        ref={pdfInputRef}
+        type="file"
+        accept="application/pdf"
+        multiple
+        style={{ display: "none" }}
+        onChange={(e) => onImportFiles(e.target.files, e.target)}
+      />
     </>
+  );
+}
+
+interface MediaMenuItemProps {
+  icon: IconName;
+  label: string;
+  disabled?: boolean;
+  onClick(): void;
+}
+
+function MediaMenuItem({ icon, label, disabled, onClick }: MediaMenuItemProps) {
+  return (
+    <button
+      type="button"
+      className="menu__item"
+      role="menuitem"
+      disabled={disabled}
+      onClick={onClick}
+    >
+      <span className="menu__item-icon">
+        <Icon name={icon} size={18} />
+      </span>
+      <span className="menu__item-label">{label}</span>
+    </button>
   );
 }
