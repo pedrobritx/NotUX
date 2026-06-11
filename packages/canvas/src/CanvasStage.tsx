@@ -17,6 +17,7 @@ import { useCommandStore } from "./store/commandStore";
 import { useDraftStore } from "./store/draftStore";
 import { usePrefsStore } from "./store/prefsStore";
 import { useSettingsStore } from "./store/settingsStore";
+import { useViewportStore } from "./store/viewportStore";
 import { DEFAULT_PAGE_ID } from "./store/pageStore";
 import { resolveInkColor } from "./theme/adaptiveInk";
 import {
@@ -204,6 +205,12 @@ export function CanvasStage({
     });
   }, [viewport, size, pageId]);
 
+  // Publish the live viewport so DOM chrome (contextual selection toolbar)
+  // can project world geometry into screen space.
+  useEffect(() => {
+    useViewportStore.getState().publish(viewport, size);
+  }, [viewport, size]);
+
   // Hit test — converts world point to container coords and asks Konva.
   const hitTestWorld = useCallback(
     (p: { x: number; y: number }): YShape | undefined => {
@@ -365,6 +372,7 @@ export function CanvasStage({
       y: w.y,
       pressure: evt.pressure > 0 ? evt.pressure : 0.5,
       shift: evt.shiftKey,
+      alt: evt.altKey,
     };
   }
 
@@ -543,17 +551,23 @@ export function CanvasStage({
     [shapes, selection],
   );
 
-  // The Transformer draws handles for transformable, unlocked shapes; the
-  // dashed OverlayLayer box covers the rest (strokes, lines, arrows) plus any
-  // locked shape (which the Transformer skips, and which renders amber).
+  // A single selected line/arrow gets draggable endpoint dots instead of a
+  // box; everything else transformable gets the Transformer's handles. The
+  // dashed OverlayLayer box covers locked shapes (amber) and lines/arrows
+  // inside a multi-selection.
+  const endpointShapes = useMemo(() => {
+    if (selectedShapes.length !== 1) return [];
+    const s = selectedShapes[0]!;
+    return (s.kind === "line" || s.kind === "arrow") && !s.locked ? [s] : [];
+  }, [selectedShapes]);
+
   const overlayShapes = useMemo(
     () =>
       selectedShapes.filter(
         (s) =>
           s.locked ||
-          s.kind === "stroke" ||
-          s.kind === "line" ||
-          s.kind === "arrow",
+          ((s.kind === "line" || s.kind === "arrow") &&
+            selectedShapes.length > 1),
       ),
     [selectedShapes],
   );
@@ -606,10 +620,19 @@ export function CanvasStage({
         />
         <OverlayLayer
           draft={draft}
-          selectedShapes={selectedShapes}
+          selectedShapes={overlayShapes}
+          endpointShapes={endpointShapes}
           viewport={viewport}
           darkCanvas={darkCanvas}
         />
+        {tool === "select" && (
+          <TransformLayer
+            selection={selection}
+            pageId={pageId}
+            revision={revision}
+            shapesLayerRef={shapesLayerRef}
+          />
+        )}
         {showRemoteCursors && (
           <PresenceLayer awareness={awareness} viewport={viewport} />
         )}

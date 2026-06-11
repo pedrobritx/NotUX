@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" data-notux-normalized="true"><svg x="13.011700000000001" y="31.41992" width="45.9766" height="9.16016" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 45.9766 9.16016">
+ <defs>
+  <linearGradient id="gradient1" x1="5" x2="5" y2="9.12109" gradientUnits="userSpaceOnUse">
+   <stop offset="0" stop-color="rgba(50,50,50,0.85)" stop-opacity="1"/>
+   <stop offset="1" stop-color="rgba(0,0,0,0.85)" stop-opacity="1"/>
+  </linearGradient>
+  <linearGradient id="gradient2" x1="5" x2="5" y2="9.12109" gradientUnits="userSpaceOnUse">
+   <stop offset="0" stop-color="rgba(50,50,50,0.85)" stop-opacity="1"/>
+   <stop offset="1" stop-color="rgba(0,0,0,0.85)" stop-opacity="1"/>
+  </linearGradient>
+  <linearGradient id="gradient3" x1="5" x2="5" y2="9.12109" gradientUnits="userSpaceOnUse">
+   <stop offset="0" stop-color="rgba(50,50,50,0.85)" stop-opacity="1"/>
+   <stop offset="1" stop-color="rgba(0,0,0,0.85)" stop-opacity="1"/>
+  </linearGradient>
+ </defs>
+ <g>
+  <rect height="9.16016" opacity="0" width="45.9766" x="0" y="0"/>
+  <path d="M41.0352 9.12109C43.5547 9.12109 45.6055 7.08984 45.6055 4.57031C45.6055 2.03125 43.5547 0 41.0352 0C38.5156 0 36.4648 2.03125 36.4648 4.57031C36.4648 7.08984 38.5156 9.12109 41.0352 9.12109Z" fill="url(#gradient1)"/>
+  <path d="M22.793 9.12109C25.332 9.12109 27.3633 7.08984 27.3633 4.57031C27.3633 2.03125 25.332 0 22.793 0C20.2734 0 18.2422 2.03125 18.2422 4.57031C18.2422 7.08984 20.2734 9.12109 22.793 9.12109Z" fill="url(#gradient2)"/>
+  <path d="M4.57031 9.12109C7.08984 9.12109 9.14062 7.08984 9.14062 4.57031C9.14062 2.03125 7.08984 0 4.57031 0C2.03125 0 0 2.03125 0 4.57031C0 7.08984 2.03125 9.12109 4.57031 9.12109Z" fill="url(#gradient3)"/>
+ </g>
+</svg>
+</svg>

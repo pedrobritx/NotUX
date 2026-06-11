@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Layer, Transformer } from "react-konva";
 import type Konva from "konva";
 import type { YShape } from "@notux/types";
@@ -13,17 +13,17 @@ interface Props {
   shapesLayerRef: RefObject<Konva.Layer | null>;
 }
 
-// v0: only box kinds get resize/rotate handles. Strokes are freehand point
-// clouds and line/arrow are endpoint-shaped — both keep move-only (drag) and
-// show the dashed OverlayLayer box instead.
+// Every kind except line/arrow gets resize/rotate handles. Lines and arrows
+// are endpoint-shaped: SelectTool drags their endpoint dots instead (see
+// OverlayLayer), which is the better interaction for connectors.
 function isTransformable(kind: YShape["kind"]): boolean {
-  return (
-    kind === "rect" ||
-    kind === "ellipse" ||
-    kind === "text" ||
-    kind === "asset" ||
-    kind === "embed"
-  );
+  return kind !== "line" && kind !== "arrow";
+}
+
+// Media keeps its aspect ratio under the corner handles (Freeform-style);
+// boxes and text resize freely.
+function keepsRatio(kind: YShape["kind"]): boolean {
+  return kind === "asset" || kind === "embed";
 }
 
 export function TransformLayer({
@@ -33,6 +33,18 @@ export function TransformLayer({
   shapesLayerRef,
 }: Props) {
   const trRef = useRef<Konva.Transformer>(null);
+
+  // Lock aspect when any selected shape is media, so a mixed selection never
+  // distorts an image/PDF/video.
+  const keepRatio = useMemo(() => {
+    const store = useShapeStore.getState();
+    for (const id of selection) {
+      const s = store.getShape(pageId, id);
+      if (s && !s.locked && keepsRatio(s.kind)) return true;
+    }
+    return false;
+    // revision: re-evaluate when shapes change under a stable selection.
+  }, [selection, pageId, revision]);
 
   useEffect(() => {
     const tr = trRef.current;
@@ -50,10 +62,10 @@ export function TransformLayer({
     tr.getLayer()?.batchDraw();
   }, [selection, revision, pageId, shapesLayerRef]);
 
-  // Bake the live Konva transform back into the model, then reset node scale so
-  // the next gesture starts clean. Nodes live in world space (the Stage carries
-  // the viewport), so no coordinate conversion is needed. One transact => one
-  // undo entry for a multi-shape transform.
+  // Bake the live Konva transform back into the model, then reset node
+  // transform so the next gesture starts clean. Nodes live in world space
+  // (the Stage carries the viewport), so no coordinate conversion is needed.
+  // One transact => one undo entry for a multi-shape transform.
   function onTransformEnd() {
     const tr = trRef.current;
     if (!tr) return;
@@ -62,30 +74,58 @@ export function TransformLayer({
       for (const node of tr.nodes()) {
         const id = node.name();
         const shape = store.getShape(pageId, id);
-        if (!shape || !isTransformable(shape.kind)) continue;
-        // Narrowed: rect | ellipse | text | asset — all carry w/h, and the
-        // Group is anchored at the shape's top-left, so node.x()/y() is the
-        // new top-left for every kind (ellipse included).
-        if (
-          shape.kind === "rect" ||
-          shape.kind === "ellipse" ||
-          shape.kind === "text" ||
-          shape.kind === "asset" ||
-          shape.kind === "embed"
-        ) {
-          const w = Math.max(1, shape.w * node.scaleX());
-          const h = Math.max(1, shape.h * node.scaleY());
+        if (!shape || shape.kind === "line" || shape.kind === "arrow") continue;
+
+        if (shape.kind === "stroke") {
+          // Freehand points are absolute world coords inside an origin Group:
+          // run them through the node's local transform, scale the brush size
+          // by the mean scale factor, then reset the node to identity.
+          const m = node.getTransform().copy();
+          const points = shape.points.slice();
+          for (let i = 0; i < points.length; i += 2) {
+            const p = m.point({ x: points[i] ?? 0, y: points[i + 1] ?? 0 });
+            points[i] = p.x;
+            points[i + 1] = p.y;
+          }
+          const meanScale =
+            (Math.abs(node.scaleX()) + Math.abs(node.scaleY())) / 2;
           store.updateShape(pageId, id, {
-            x: node.x(),
-            y: node.y(),
-            rot: node.rotation(),
-            w,
-            h,
-            ...(shape.kind === "text"
-              ? { size: Math.max(8, shape.size * node.scaleY()) }
-              : {}),
+            points,
+            size: Math.max(0.5, shape.size * meanScale),
           });
+          node.position({ x: 0, y: 0 });
+          node.rotation(0);
+          node.scaleX(1);
+          node.scaleY(1);
+          continue;
         }
+
+        // Box kinds all carry x/y/w/h(+rot); the Group is anchored at the
+        // shape's top-left, so node.x()/y() is the new top-left for every
+        // kind (ellipse included).
+        const w = Math.max(1, shape.w * node.scaleX());
+        const h = Math.max(1, shape.h * node.scaleY());
+        store.updateShape(pageId, id, {
+          x: node.x(),
+          y: node.y(),
+          rot: node.rotation(),
+          w,
+          h,
+          // Text scales with its box; sticky text follows the note size so
+          // resizing feels like Freeform, not a reflow surprise.
+          ...(shape.kind === "text"
+            ? { size: Math.max(8, shape.size * node.scaleY()) }
+            : {}),
+          ...(shape.kind === "sticky"
+            ? {
+                fontSize: Math.max(
+                  10,
+                  (shape.fontSize ?? 18) *
+                    Math.sqrt(Math.abs(node.scaleX() * node.scaleY())),
+                ),
+              }
+            : {}),
+        });
         node.scaleX(1);
         node.scaleY(1);
       }
@@ -97,7 +137,7 @@ export function TransformLayer({
       <Transformer
         ref={trRef}
         rotateEnabled
-        keepRatio={false}
+        keepRatio={keepRatio}
         flipEnabled={false}
         ignoreStroke
         boundBoxFunc={(oldBox, newBox) =>

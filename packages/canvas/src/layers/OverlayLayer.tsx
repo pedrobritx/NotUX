@@ -1,5 +1,5 @@
-import type { YShape } from "@notux/types";
-import { Arrow, Ellipse, Layer, Line, Rect } from "react-konva";
+import type { YArrow, YLine, YShape } from "@notux/types";
+import { Arrow, Circle, Ellipse, Layer, Line, Rect } from "react-konva";
 import type { DraftStore } from "../store/draftStore";
 import { strokeOutline } from "../renderers/strokeGeometry";
 import { arrowPoints } from "../renderers/ArrowRenderer";
@@ -12,9 +12,18 @@ import type { ViewportState } from "../viewport/Viewport";
 interface Props {
   draft: Pick<
     DraftStore,
-    "stroke" | "rect" | "ellipse" | "polygon" | "line" | "arrow" | "marquee"
+    | "stroke"
+    | "rect"
+    | "ellipse"
+    | "polygon"
+    | "line"
+    | "arrow"
+    | "marquee"
+    | "guides"
   >;
   selectedShapes: YShape[];
+  // Single-selected line/arrow: draws draggable endpoint dots instead of a box.
+  endpointShapes?: Array<YLine | YArrow>;
   viewport: ViewportState;
   darkCanvas?: boolean;
 }
@@ -26,12 +35,14 @@ interface Props {
 export function OverlayLayer({
   draft,
   selectedShapes,
+  endpointShapes = [],
   viewport,
   darkCanvas = false,
 }: Props) {
   const handleSize = 6 / viewport.scale;
   const selection = cssVar("--selection", "#5ac8fa");
   const selectionFill = cssVar("--selection-fill", "rgba(90, 200, 250, 0.10)");
+  const guideColor = cssVar("--snap-guide", "#ffcc00");
   const ink = (c: string) => resolveInkColor(c, darkCanvas);
 
   return (
@@ -167,6 +178,44 @@ export function OverlayLayer({
           />
         );
       })}
+
+      {/* Endpoint dots for a single selected line/arrow (drag to reshape). */}
+      {endpointShapes.map((s) =>
+        (
+          [
+            [s.x1, s.y1, 1],
+            [s.x2, s.y2, 2],
+          ] as const
+        ).map(([x, y, i]) => (
+          <Circle
+            key={`ep-${s.id}-${i}`}
+            x={x}
+            y={y}
+            radius={7 / viewport.scale}
+            fill="#ffffff"
+            stroke={selection}
+            strokeWidth={2 / viewport.scale}
+            shadowColor="rgba(0,0,0,0.35)"
+            shadowBlur={4 / viewport.scale}
+            shadowOffsetY={1 / viewport.scale}
+          />
+        )),
+      )}
+
+      {/* Smart-alignment guides (Keynote-style) while dragging. */}
+      {draft.guides.map((g, i) => (
+        <Line
+          key={`guide-${i}`}
+          points={
+            g.orientation === "v"
+              ? [g.at, g.from, g.at, g.to]
+              : [g.from, g.at, g.to, g.at]
+          }
+          stroke={guideColor}
+          strokeWidth={1.5 / viewport.scale}
+          listening={false}
+        />
+      ))}
     </Layer>
   );
 }

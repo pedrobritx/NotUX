@@ -22,10 +22,11 @@ export const INSTRUMENT_IDS: readonly InstrumentId[] = [
   "marker",
 ] as const;
 
-// The pen-family styles offered in the Pen popover.
+// The pen-family styles offered in the Pen popover. "Fineliner" was retired
+// from the picker — it duplicated Pen at a thin width preset — but stays a
+// valid InstrumentId/StrokeStyle so existing boards keep rendering.
 export const PEN_STYLES: readonly InstrumentId[] = [
   "pen",
-  "fineliner",
   "pencil",
   "marker",
 ] as const;
