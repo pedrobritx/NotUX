@@ -24,6 +24,16 @@ export type IconName =
   | "menu"
   | "close"
   | "check"
+  | "ellipsis"
+  | "search"
+  | "star"
+  | "clock"
+  | "archive"
+  | "rename"
+  | "board"
+  | "duplicate"
+  | "sliders"
+  | "opacity"
   | "undo"
   | "redo"
   | "zoom-in"
@@ -36,6 +46,14 @@ export type IconName =
   | "to-back"
   | "forward"
   | "backward"
+  | "obj-align-left"
+  | "obj-align-center"
+  | "obj-align-right"
+  | "obj-align-top"
+  | "obj-align-middle"
+  | "obj-align-bottom"
+  | "distribute-h"
+  | "distribute-v"
   | "sun"
   | "moon"
   | "upload"
@@ -73,12 +91,6 @@ export type IconName =
 
 // Hand-drawn fallbacks for names without SF artwork.
 const PATHS: Partial<Record<IconName, ReactNode>> = {
-  shapes: (
-    <>
-      <rect x="3" y="13" width="8" height="8" rx="1" />
-      <circle cx="16.5" cy="7.5" r="4.5" />
-    </>
-  ),
   sticky: <path d="M5 4h14v10l-5 5H5zM14 19v-5h5" />,
   grip: (
     <>
@@ -90,29 +102,6 @@ const PATHS: Partial<Record<IconName, ReactNode>> = {
       <circle cx="15" cy="18" r="1.3" />
     </>
   ),
-  rounded: <rect x="4" y="4" width="16" height="16" rx="4" />,
-  "arrow-elbow": <path d="M5 19h9V5M9 9l5-4 5 4" />,
-  "grid-dots": (
-    <>
-      <circle cx="6" cy="6" r="1.2" />
-      <circle cx="12" cy="6" r="1.2" />
-      <circle cx="18" cy="6" r="1.2" />
-      <circle cx="6" cy="12" r="1.2" />
-      <circle cx="12" cy="12" r="1.2" />
-      <circle cx="18" cy="12" r="1.2" />
-      <circle cx="6" cy="18" r="1.2" />
-      <circle cx="12" cy="18" r="1.2" />
-      <circle cx="18" cy="18" r="1.2" />
-    </>
-  ),
-  "grid-lines": (
-    <>
-      <rect x="4" y="4" width="16" height="16" rx="1" />
-      <path d="M4 9.3h16M4 14.6h16M9.3 4v16M14.6 4v16" />
-    </>
-  ),
-  "grid-ruled": <path d="M4 7h16M4 12h16M4 17h16" />,
-  "grid-plain": <rect x="4" y="4" width="16" height="16" rx="2" />,
 };
 
 interface Props {

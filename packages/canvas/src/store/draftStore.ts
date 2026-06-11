@@ -1,5 +1,6 @@
 import type { StrokeStyle } from "@notux/types";
 import { create } from "zustand";
+import type { SnapGuide } from "../tools/snapping";
 
 export interface DraftStroke {
   tool: "pen" | "highlighter";
@@ -51,6 +52,8 @@ interface DraftStoreState {
   line: DraftLine | null;
   arrow: DraftLine | null;
   marquee: { x: number; y: number; w: number; h: number } | null;
+  // Live smart-alignment guides while dragging (SelectTool writes).
+  guides: SnapGuide[];
   setStroke(s: DraftStroke | null): void;
   setRect(r: DraftRect | null): void;
   setEllipse(r: DraftRect | null): void;
@@ -58,6 +61,7 @@ interface DraftStoreState {
   setLine(l: DraftLine | null): void;
   setArrow(l: DraftLine | null): void;
   setMarquee(m: { x: number; y: number; w: number; h: number } | null): void;
+  setGuides(guides: SnapGuide[]): void;
   clear(): void;
 }
 
@@ -72,6 +76,7 @@ export const useDraftStore = create<DraftStoreState>((set) => ({
   line: null,
   arrow: null,
   marquee: null,
+  guides: [],
   setStroke(s) {
     set({ stroke: s });
   },
@@ -93,6 +98,9 @@ export const useDraftStore = create<DraftStoreState>((set) => ({
   setMarquee(m) {
     set({ marquee: m });
   },
+  setGuides(guides) {
+    set({ guides });
+  },
   clear() {
     set({
       stroke: null,
@@ -102,6 +110,7 @@ export const useDraftStore = create<DraftStoreState>((set) => ({
       line: null,
       arrow: null,
       marquee: null,
+      guides: [],
     });
   },
 }));

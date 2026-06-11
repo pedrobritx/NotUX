@@ -1,122 +1,116 @@
 import type { IconName } from "./Icon";
 
-// SF Symbol artwork (monochrome @2x PNGs, black-on-transparent) rendered via
-// CSS mask so glyphs tint with `currentColor` in either theme. Names without
-// an entry here fall back to the hand-drawn stroke SVGs in Icon.tsx.
+// SF Symbol artwork (vector SVGs, black-on-transparent) rendered via CSS mask
+// so glyphs tint with `currentColor` in either theme and stay crisp at any
+// size. Names without an entry here fall back to the hand-drawn stroke SVGs
+// in Icon.tsx.
+const u = (file: string) =>
+  new URL(`./assets/${file}.svg`, import.meta.url).href;
+
 export const SF_ICON_URLS: Partial<Record<IconName, string>> = {
   // Dock tools
-  select: new URL("./assets/pointer.arrow.ipad@2x.png", import.meta.url).href,
-  hand: new URL("./assets/hand.point.up@2x.png", import.meta.url).href,
-  pen: new URL("./assets/pencil.line@2x.png", import.meta.url).href,
-  eraser: new URL("./assets/eraser@2x.png", import.meta.url).href,
-  highlighter: new URL("./assets/highlighter@2x.png", import.meta.url).href,
-  text: new URL("./assets/textformat@2x.png", import.meta.url).href,
-  media: new URL("./assets/photo.on.rectangle@2x.png", import.meta.url).href,
+  select: u("pointer.arrow.ipad"),
+  hand: u("hand.point.up"),
+  pen: u("pencil.line"),
+  eraser: u("eraser"),
+  highlighter: u("highlighter"),
+  text: u("textformat"),
+  media: u("photo.on.rectangle"),
+  shapes: u("square.on.circle"),
 
   // Chrome / navigation
-  plus: new URL("./assets/plus@2x.png", import.meta.url).href,
-  minus: new URL("./assets/minus@2x.png", import.meta.url).href,
-  "chevron-down": new URL("./assets/chevron.down@2x.png", import.meta.url).href,
-  "chevron-up": new URL("./assets/chevron.up@2x.png", import.meta.url).href,
-  "chevron-left": new URL("./assets/chevron.left@2x.png", import.meta.url).href,
-  "chevron-right": new URL("./assets/chevron.right@2x.png", import.meta.url)
-    .href,
-  menu: new URL("./assets/text.justify@2x.png", import.meta.url).href,
-  close: new URL("./assets/xmark@2x.png", import.meta.url).href,
-  check: new URL("./assets/checkmark@2x.png", import.meta.url).href,
+  plus: u("plus"),
+  minus: u("minus"),
+  "chevron-down": u("chevron.down"),
+  "chevron-up": u("chevron.up"),
+  "chevron-left": u("chevron.left"),
+  "chevron-right": u("chevron.right"),
+  menu: u("text.justify"),
+  close: u("xmark"),
+  check: u("checkmark"),
+  ellipsis: u("ellipsis"),
+  search: u("magnifyingglass"),
+  star: u("star"),
+  clock: u("clock"),
+  archive: u("archivebox"),
+  rename: u("pencil"),
+  board: u("rectangle.on.rectangle"),
+  duplicate: u("square.on.square"),
+  sliders: u("slider.horizontal.3"),
+  opacity: u("circle.lefthalf.filled"),
 
   // Edit / view
-  undo: new URL("./assets/arrow.counterclockwise@2x.png", import.meta.url)
-    .href,
-  redo: new URL("./assets/arrow.clockwise@2x.png", import.meta.url).href,
-  "zoom-in": new URL("./assets/plus@2x.png", import.meta.url).href,
-  "zoom-out": new URL("./assets/minus@2x.png", import.meta.url).href,
-  "zoom-reset": new URL("./assets/viewfinder@2x.png", import.meta.url).href,
-  history: new URL(
-    "./assets/clock.arrow.trianglehead.clockwise.rotate.90.path.dotted@2x.png",
-    import.meta.url,
-  ).href,
-  trash: new URL("./assets/trash@2x.png", import.meta.url).href,
-  lock: new URL("./assets/lock@2x.png", import.meta.url).href,
-  unlock: new URL("./assets/lock.open@2x.png", import.meta.url).href,
-  sun: new URL("./assets/sun.max@2x.png", import.meta.url).href,
-  moon: new URL("./assets/moon@2x.png", import.meta.url).href,
-  cursors: new URL(
-    "./assets/inset.filled.rectangle.and.pointer.arrow@2x.png",
-    import.meta.url,
-  ).href,
-  background: new URL("./assets/swatchpalette@2x.png", import.meta.url).href,
+  undo: u("arrow.counterclockwise"),
+  redo: u("arrow.clockwise"),
+  "zoom-in": u("plus"),
+  "zoom-out": u("minus"),
+  "zoom-reset": u("viewfinder"),
+  history: u("clock.arrow.trianglehead.clockwise.rotate.90.path.dotted"),
+  trash: u("trash"),
+  lock: u("lock"),
+  unlock: u("lock.open"),
+  sun: u("sun.max"),
+  moon: u("moon"),
+  cursors: u("inset.filled.rectangle.and.pointer.arrow"),
+  background: u("swatchpalette"),
 
   // Arrange (z-order)
-  "to-front": new URL(
-    "./assets/square.3.layers.3d.top.filled@2x.png",
-    import.meta.url,
-  ).href,
-  forward: new URL("./assets/square.stack.3d.up@2x.png", import.meta.url).href,
-  backward: new URL(
-    "./assets/square.3.layers.3d.middle.filled@2x.png",
-    import.meta.url,
-  ).href,
-  "to-back": new URL(
-    "./assets/square.3.layers.3d.bottom.filled@2x.png",
-    import.meta.url,
-  ).href,
+  "to-front": u("square.3.layers.3d.top.filled"),
+  forward: u("square.stack.3d.up"),
+  backward: u("square.3.layers.3d.middle.filled"),
+  "to-back": u("square.3.layers.3d.bottom.filled"),
+
+  // Object alignment / distribution
+  "obj-align-left": u("align.horizontal.left"),
+  "obj-align-center": u("align.horizontal.center"),
+  "obj-align-right": u("align.horizontal.right"),
+  "obj-align-top": u("align.vertical.top"),
+  "obj-align-middle": u("align.vertical.center"),
+  "obj-align-bottom": u("align.vertical.bottom"),
+  "distribute-h": u("distribute.horizontal"),
+  "distribute-v": u("distribute.vertical"),
 
   // Transfer / files
-  upload: new URL("./assets/square.and.arrow.up@2x.png", import.meta.url).href,
-  download: new URL("./assets/square.and.arrow.down@2x.png", import.meta.url)
-    .href,
-  share: new URL("./assets/square.and.arrow.up@2x.png", import.meta.url).href,
-  link: new URL("./assets/link@2x.png", import.meta.url).href,
-  pages: new URL("./assets/book.pages@2x.png", import.meta.url).href,
-  photo: new URL("./assets/photo@2x.png", import.meta.url).href,
-  audio: new URL("./assets/speaker.wave.2@2x.png", import.meta.url).href,
-  file: new URL("./assets/text.document@2x.png", import.meta.url).href,
-  video: new URL("./assets/play.display@2x.png", import.meta.url).href,
-  folder: new URL("./assets/folder@2x.png", import.meta.url).href,
-  eyedropper: new URL("./assets/eyedropper@2x.png", import.meta.url).href,
+  upload: u("square.and.arrow.up"),
+  download: u("square.and.arrow.down"),
+  share: u("square.and.arrow.up"),
+  link: u("link"),
+  pages: u("book.pages"),
+  photo: u("photo"),
+  audio: u("speaker.wave.2"),
+  file: u("text.document"),
+  video: u("play.display"),
+  folder: u("folder"),
+  eyedropper: u("eyedropper"),
 
   // Collaboration
-  spotlight: new URL("./assets/megaphone@2x.png", import.meta.url).href,
-  people: new URL("./assets/person.3.sequence@2x.png", import.meta.url).href,
+  spotlight: u("megaphone"),
+  people: u("person.2"),
 
-  // Shapes
-  square: new URL("./assets/square@2x.png", import.meta.url).href,
-  circle: new URL("./assets/circle@2x.png", import.meta.url).href,
-  diamond: new URL("./assets/diamond@2x.png", import.meta.url).href,
-  triangle: new URL("./assets/triangle@2x.png", import.meta.url).href,
-  line: new URL("./assets/line.diagonal@2x.png", import.meta.url).href,
-  arrow: new URL(
-    "./assets/line.diagonal.trianglehead.up.right@2x.png",
-    import.meta.url,
-  ).href,
-  "arrow-curved": new URL(
-    "./assets/point.topleft.down.to.point.bottomright.curvepath@2x.png",
-    import.meta.url,
-  ).href,
+  // Shape library
+  square: u("square"),
+  rounded: u("app"),
+  circle: u("circle"),
+  diamond: u("diamond"),
+  triangle: u("triangle"),
+  line: u("line.diagonal"),
+  arrow: u("arrow.up.right"),
+  "arrow-curved": u("point.bottomleft.forward.to.point.topright.scurvepath"),
+  "arrow-elbow": u("arrow.turn.right.up"),
 
   // Text alignment
-  "align-left": new URL("./assets/text.alignleft@2x.png", import.meta.url)
-    .href,
-  "align-center": new URL("./assets/text.aligncenter@2x.png", import.meta.url)
-    .href,
-  "align-right": new URL("./assets/text.alignright@2x.png", import.meta.url)
-    .href,
+  "align-left": u("text.alignleft"),
+  "align-center": u("text.aligncenter"),
+  "align-right": u("text.alignright"),
+
+  // Canvas grid styles
+  "grid-dots": u("circle.grid.3x3"),
+  "grid-lines": u("grid"),
+  "grid-ruled": u("line.3.horizontal"),
+  "grid-plain": u("rectangle"),
 };
 
-// SF exports carry uneven intrinsic padding; a few glyphs need a small optical
-// correction so they sit at the same visual weight as their neighbours.
-export const SF_ICON_SCALE: Partial<Record<IconName, number>> = {
-  plus: 0.86,
-  minus: 0.86,
-  "zoom-in": 0.86,
-  "zoom-out": 0.86,
-  close: 0.86,
-  check: 0.88,
-  "chevron-down": 0.82,
-  "chevron-up": 0.82,
-  "chevron-left": 0.82,
-  "chevron-right": 0.82,
-  line: 0.88,
-  menu: 0.92,
-};
+// Optional per-glyph mask scale. The SVG assets are normalized onto a shared
+// square canvas (see assets), so glyphs already sit at consistent optical
+// weight; entries here are only for deliberate one-off corrections.
+export const SF_ICON_SCALE: Partial<Record<IconName, number>> = {};

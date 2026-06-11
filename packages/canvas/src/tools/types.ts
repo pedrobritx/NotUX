@@ -8,6 +8,8 @@ export interface ToolEventPoint {
   y: number;
   pressure: number;
   shift: boolean;
+  // Alt/Option temporarily disables magnetic snapping while dragging.
+  alt?: boolean;
 }
 
 export interface ToolContext {

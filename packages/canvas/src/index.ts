@@ -1,4 +1,10 @@
 export { CanvasStage } from "./CanvasStage";
+export { useViewportStore } from "./store/viewportStore";
+export { shapeBounds, translateShape } from "./tools/shapeOps";
+export type { Bounds } from "./tools/shapeOps";
+export { alignShapes, distributeShapes } from "./tools/alignOps";
+export type { AlignEdge } from "./tools/alignOps";
+export { newShapeId } from "./ids";
 export { useAwareness } from "./hooks/useAwareness";
 export { useRemoteCursors } from "./hooks/useRemoteCursors";
 export type { RemoteCursor } from "./hooks/useRemoteCursors";

@@ -12,6 +12,7 @@
   --fg-0: rgba(255, 255, 255, 0.92);
   --fg-1: rgba(255, 255, 255, 0.62);
   --accent: #5ac8fa;
+  --accent-hover: #74d2fb;
 
   --glass-tint: rgba(255, 255, 255, 0.1);
   --glass-stroke: rgba(255, 255, 255, 0.22);
@@ -22,6 +23,7 @@
   --canvas-dot: rgba(255, 255, 255, 0.1);
   --selection: #5ac8fa;
   --selection-fill: rgba(90, 200, 250, 0.1);
+  --snap-guide: #ffd60a;
 
   --dock-bg: rgba(22, 26, 34, 0.62);
   --popover-bg: rgba(30, 34, 42, 0.92);
@@ -44,6 +46,7 @@
   --fg-0: rgba(20, 22, 28, 0.92);
   --fg-1: rgba(20, 22, 28, 0.55);
   --accent: #0a84ff;
+  --accent-hover: #2e95ff;
 
   --glass-tint: rgba(255, 255, 255, 0.55);
   --glass-stroke: rgba(20, 22, 28, 0.1);
@@ -54,6 +57,7 @@
   --canvas-dot: rgba(20, 22, 28, 0.1);
   --selection: #0a84ff;
   --selection-fill: rgba(10, 132, 255, 0.1);
+  --snap-guide: #ff9500;
 
   --dock-bg: rgba(238, 240, 243, 0.72);
   --popover-bg: rgba(255, 255, 255, 0.94);
@@ -114,6 +118,14 @@
 
 .glass-button:hover {
   background: var(--glass-hover);
+}
+
+/* Active (accent) states must survive hover: the generic :hover rules above
+   outrank single-class --active modifiers, which previously swapped the
+   accent background for --glass-hover — near-white in light mode — under a
+   white glyph, making hovered active controls invisible. */
+.glass-button--active:hover {
+  background: color-mix(in srgb, var(--accent) 32%, transparent);
 }
 
 .glass-button:active {
@@ -287,7 +299,11 @@
 .slider {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  /* Never push past the popover/sheet that hosts it: the rail flexes, the
+     value box stays content-sized, and nothing overflows on narrow screens. */
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* The rail is the positioning context. The colored track clips its gradient /
@@ -298,6 +314,7 @@
   flex: 1;
   display: flex;
   align-items: center;
+  min-width: 0;
 }
 
 .slider__track {
@@ -350,12 +367,13 @@
 
 .slider__value {
   flex: none;
-  min-width: 64px;
+  min-width: 48px;
   text-align: center;
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 600;
-  padding: 8px 10px;
-  border-radius: 10px;
+  font-variant-numeric: tabular-nums;
+  padding: 6px 8px;
+  border-radius: 8px;
   background: var(--segment-active-bg);
   border: 1px solid var(--glass-stroke);
 }
@@ -488,6 +506,13 @@
   color: #fff;
 }
 
+/* Keep the accent surface (slightly lifted) when hovering the active tool so
+   the white glyph never lands on a light hover background. */
+.dock__tool--active:hover {
+  background: var(--accent-hover);
+  color: #fff;
+}
+
 .dock__chevron {
   position: absolute;
   right: 3px;
@@ -605,7 +630,8 @@ input:focus-visible {
   background: var(--glass-hover);
 }
 
-.brush-style--active {
+.brush-style--active,
+.brush-style--active:hover {
   background: var(--preset-active-bg);
   color: var(--preset-active-fg);
   border-color: transparent;
@@ -681,7 +707,8 @@ input:focus-visible {
   background: var(--segment-bg);
 }
 
-.width-preset--active {
+.width-preset--active,
+.width-preset--active:hover {
   background: var(--preset-active-bg);
   color: var(--preset-active-fg);
 }
@@ -820,7 +847,39 @@ input:focus-visible {
   width: min(280px, calc(100vw - 24px));
 }
 
-/* Compact swatch palette row (shared by ColorPicker + SelectionInspector). */
+/* Disclosure row that reveals the advanced layer (hex / opacity / save). */
+.color-picker__more {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--fg-1);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.color-picker__more:hover {
+  background: var(--glass-hover);
+  color: var(--fg-0);
+}
+
+.color-picker__advanced {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--glass-stroke);
+}
+
+/* Compact swatch palette row (shared by ColorPicker + SelectionToolbar). */
 .color-palette-mini {
   display: flex;
   flex-wrap: wrap;
@@ -917,7 +976,8 @@ input:focus-visible {
   background: var(--glass-hover);
 }
 
-.text-toolbar__btn--active {
+.text-toolbar__btn--active,
+.text-toolbar__btn--active:hover {
   background: var(--preset-active-bg);
   color: var(--preset-active-fg);
 }
@@ -1174,7 +1234,8 @@ input:focus-visible {
   color: var(--fg-0);
 }
 
-.menu__grid-btn--active {
+.menu__grid-btn--active,
+.menu__grid-btn--active:hover {
   background: var(--segment-active-bg);
   color: var(--fg-0);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);

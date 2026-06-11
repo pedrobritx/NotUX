@@ -13,9 +13,10 @@ import { CollabBar } from "../features/canvas/CollabBar";
 import { Dock } from "../features/canvas/Dock";
 import { FollowPill } from "../features/canvas/FollowPill";
 import { SaveStatus } from "../features/canvas/SaveStatus";
-import { SelectionInspector } from "../features/canvas/SelectionInspector";
+import { SelectionToolbar } from "../features/canvas/SelectionToolbar";
 import { useIdentity } from "../features/canvas/useIdentity";
 import { ensureBoardOwnership } from "../features/board/boardOwnership";
+import { useLibraryStore } from "../features/library/libraryStore";
 import { getSupabase } from "../lib/supabase";
 
 export default function Board() {
@@ -27,6 +28,11 @@ export default function Board() {
   const client = getSupabase();
   const activePageId = usePageStore((s) => s.activePageId);
   const { theme } = useTheme();
+
+  // Index the visit so the board shows up in Home's library/recents.
+  useEffect(() => {
+    if (boardId) useLibraryStore.getState().touchBoard(boardId);
+  }, [boardId]);
 
   useEffect(() => {
     if (!boardId) return;
@@ -94,7 +100,7 @@ export default function Board() {
       />
       <FollowPill />
       <Dock />
-      <SelectionInspector pageId={activePageId} />
+      <SelectionToolbar pageId={activePageId} />
       <SaveStatus />
     </div>
   );
