@@ -9,6 +9,33 @@ direction but re-prioritizes around the genuine, verified gaps.
 Strategic posture is unchanged: keep the Konva + Yjs + Supabase Realtime + Liquid Glass
 stack; treat Excalidraw/tldraw/OpenBoard as reference implementations, not dependencies.
 
+## M-Sec — Private-by-default authorization ✅ (this PR)
+
+**The security gate.** Replaces the "free-for-all public board" model (a leaked
+board UUID granted read/write/delete on another tutor's lesson, world-readable
+uploads, and unauthenticated Realtime) with an explicit membership model.
+
+- `supabase/migrations/0005_security_membership.sql`: `board_members` +
+  `board_shares` (hashed, expiring, revocable capability tokens); an owner-
+  enrollment trigger; RLS rewritten so reads are owner/member (legacy `is_public`
+  kept only as a transitional read path) and **writes/deletes require an editing
+  membership**; `board-assets` flipped to a **private** bucket with membership-
+  gated storage RLS; `create_board_share` / `redeem_share_token` RPCs; and
+  `realtime.messages` policies for private channel authorization.
+- `packages/canvas/src/assets/storage.ts` + `MediaOverlayLayer.tsx`: assets are
+  served via short-lived **signed URLs** instead of a permanent public URL.
+- `apps/web/.../boardOwnership.ts` + `Board.tsx` + `CollabBar.tsx`: an owner can
+  mint an "Invite to edit" capability link; opening it redeems the token into a
+  membership, minting an **anonymous guest session** first so account-less
+  students still get a stable id for RLS.
+- Private Realtime channels are gated behind `VITE_REALTIME_PRIVATE` (off by
+  default) so the transport can cut over after the Dashboard toggle + anon
+  sign-in are in place.
+
+*Exit criterion:* an anon client with only a board UUID (no invite) is denied
+read/write on another board's rows, assets, and realtime topic; an invited guest
+gains exactly the shared role.
+
 ## M10 — Durable Yjs autosave persistence ✅ (this PR)
 
 **The critical architectural fix.** Board state previously lived only in each client's

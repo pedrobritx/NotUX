@@ -1,6 +1,6 @@
-import type { CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import type { YEmbed, YShape } from "@notux/types";
-import { assetPublicUrl } from "./assets/storage";
+import { assetSignedUrl } from "./assets/storage";
 import { useAssetStore } from "./store/assetStore";
 import type { ViewportState } from "./viewport/Viewport";
 
@@ -72,16 +72,9 @@ function EmbedPlayer({
   };
 
   if (shape.embedType === "audio") {
-    const src = resolveAudioSrc(shape.assetId);
     return (
       <div style={wrap}>
-        {src ? (
-          <audio
-            controls
-            src={src}
-            style={{ width: "100%", display: "block" }}
-          />
-        ) : null}
+        <AudioPlayer assetId={shape.assetId} />
       </div>
     );
   }
@@ -102,9 +95,27 @@ function EmbedPlayer({
   );
 }
 
-function resolveAudioSrc(assetId: string | undefined): string | null {
-  if (!assetId) return null;
-  const { _client, _boardId } = useAssetStore.getState();
-  if (!_client || !_boardId) return null;
-  return assetPublicUrl(_client, _boardId, assetId);
+// The bucket is private, so an audio src is a short-lived signed URL minted on
+// demand. Resolve it asynchronously and render an empty player until it lands
+// (or stays empty if signing is denied/fails).
+function AudioPlayer({ assetId }: { assetId: string | undefined }) {
+  const [src, setSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setSrc(null);
+    const { _client, _boardId } = useAssetStore.getState();
+    if (!assetId || !_client || !_boardId) return;
+    void assetSignedUrl(_client, _boardId, assetId).then((url) => {
+      if (!cancelled) setSrc(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [assetId]);
+
+  if (!src) return null;
+  return (
+    <audio controls src={src} style={{ width: "100%", display: "block" }} />
+  );
 }

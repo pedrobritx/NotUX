@@ -15,9 +15,13 @@ import { FollowPill } from "../features/canvas/FollowPill";
 import { SaveStatus } from "../features/canvas/SaveStatus";
 import { SelectionToolbar } from "../features/canvas/SelectionToolbar";
 import { useIdentity } from "../features/canvas/useIdentity";
-import { ensureBoardOwnership } from "../features/board/boardOwnership";
+import {
+  ensureBoardOwnership,
+  redeemAccessFromHash,
+} from "../features/board/boardOwnership";
 import { useLibraryStore } from "../features/library/libraryStore";
 import { getSupabase } from "../lib/supabase";
+import { env } from "../env";
 
 export default function Board() {
   const { boardId } = useParams<{ boardId: string }>();
@@ -38,27 +42,39 @@ export default function Board() {
     if (!boardId) return;
     setReady(false);
     setOwned(false);
-    // Enable realtime collaboration when Supabase is configured; otherwise the
-    // board runs in local-only mode against IndexedDB.
-    useShapeStore
-      .getState()
-      .configureRealtime(client ? { client, identity } : null);
-    // Bytes live in Supabase Storage; import is disabled when client is null.
-    useAssetStore.getState().configure({ boardId, client });
-    useShapeStore
-      .getState()
-      .initBoard(boardId)
-      .then(() => {
-        // Seed/migrate the page list against the IndexedDB-hydrated doc.
-        usePageStore.getState().initPages(boardId);
-        useSettingsStore.getState().initSettings(boardId);
-        setReady(true);
-        // Claim board ownership when signed in — gates named snapshots.
-        void ensureBoardOwnership(client, boardId).then((r) => {
-          setOwned(r.owned);
-          setIsPublic(r.isPublic);
-        });
-      });
+    let cancelled = false;
+    void (async () => {
+      // Redeem a capability token from the URL fragment (and mint a guest
+      // session if needed) BEFORE any board read, so membership-gated RLS lets
+      // this client load assets/snapshots and join the realtime channel.
+      await redeemAccessFromHash(client);
+      if (cancelled) return;
+      // Enable realtime collaboration when Supabase is configured; otherwise the
+      // board runs in local-only mode against IndexedDB.
+      useShapeStore
+        .getState()
+        .configureRealtime(
+          client
+            ? { client, identity, privateChannel: env.realtimePrivate }
+            : null,
+        );
+      // Bytes live in Supabase Storage; import is disabled when client is null.
+      useAssetStore.getState().configure({ boardId, client });
+      await useShapeStore.getState().initBoard(boardId);
+      if (cancelled) return;
+      // Seed/migrate the page list against the IndexedDB-hydrated doc.
+      usePageStore.getState().initPages(boardId);
+      useSettingsStore.getState().initSettings(boardId);
+      setReady(true);
+      // Claim board ownership when signed in — gates named snapshots.
+      const r = await ensureBoardOwnership(client, boardId);
+      if (cancelled) return;
+      setOwned(r.owned);
+      setIsPublic(r.isPublic);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [boardId, identity, client]);
 
   if (!ready) {

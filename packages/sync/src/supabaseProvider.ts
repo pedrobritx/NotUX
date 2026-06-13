@@ -40,6 +40,12 @@ export interface SupabaseProviderOptions {
   boardId: string;
   doc: Y.Doc;
   awareness: Awareness;
+  // When true, open the channel as a private (RLS-authorized) channel so only
+  // members of the board can subscribe/broadcast. Requires the project's
+  // Realtime "Allow public access" to be disabled and the realtime.messages
+  // policies from 0005_security_membership.sql. Defaults to the legacy public
+  // channel for backward compatibility.
+  privateChannel?: boolean;
 }
 
 interface Envelope {
@@ -68,7 +74,7 @@ export class SupabaseProvider {
     this.sessionId = Math.random().toString(36).slice(2);
 
     this.channel = this.client.channel(`notux-board-${opts.boardId}`, {
-      config: { broadcast: { self: false } },
+      config: { broadcast: { self: false }, private: opts.privateChannel ?? false },
     });
 
     this.channel.on("broadcast", { event: BROADCAST_EVENT }, ({ payload }) => {

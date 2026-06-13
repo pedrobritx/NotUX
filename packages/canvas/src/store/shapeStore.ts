@@ -21,6 +21,10 @@ import {
 export interface RealtimeConfig {
   client: SupabaseClient;
   identity: { name: string; color: string; avatarUrl?: string | null };
+  // Open the board's Realtime channel as a private (RLS-authorized) channel.
+  // Requires "Allow public access" to be disabled in the project's Realtime
+  // settings and the 0005 realtime.messages policies to be applied.
+  privateChannel?: boolean;
 }
 
 // One promise per boardId — concurrent callers for the same board share the
@@ -183,7 +187,13 @@ export const useShapeStore = create<ShapeStoreState>((set, get) => ({
           color: cfg.identity.color,
           avatarUrl: cfg.identity.avatarUrl ?? null,
         });
-        getSupabaseProvider({ client: cfg.client, boardId, doc, awareness });
+        getSupabaseProvider({
+          client: cfg.client,
+          boardId,
+          doc,
+          awareness,
+          privateChannel: cfg.privateChannel,
+        });
         set({ _awareness: awareness });
 
         // Durable persistence: merge the server-side autosave snapshot so a
