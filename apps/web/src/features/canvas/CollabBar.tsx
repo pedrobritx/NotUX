@@ -7,7 +7,7 @@ import {
   useRemoteCursors,
   type RemoteCursor,
 } from "@notux/canvas";
-import { setBoardVisibility } from "../board/boardOwnership";
+import { createShareLink, setBoardVisibility } from "../board/boardOwnership";
 import type { Identity } from "./useIdentity";
 
 interface Props {
@@ -83,6 +83,7 @@ export function CollabBar({ boardId, client, owned, isPublic, identity }: Props)
 
   const [shareOpen, setShareOpen] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [inviteCopied, setInviteCopied] = useState(false);
   const [pub, setPub] = useState(isPublic);
   const [busy, setBusy] = useState(false);
   const shareBtnRef = useRef<HTMLButtonElement>(null);
@@ -95,6 +96,18 @@ export function CollabBar({ boardId, client, owned, isPublic, identity }: Props)
       setLinkCopied(true);
       window.setTimeout(() => setLinkCopied(false), 1500);
     });
+  }
+
+  async function copyInvite() {
+    if (!client) return;
+    setBusy(true);
+    const res = await createShareLink(client, boardId, "draw");
+    setBusy(false);
+    if ("url" in res) {
+      await navigator.clipboard?.writeText(res.url);
+      setInviteCopied(true);
+      window.setTimeout(() => setInviteCopied(false), 1500);
+    }
   }
 
   async function toggleVisibility() {
@@ -198,6 +211,22 @@ export function CollabBar({ boardId, client, owned, isPublic, identity }: Props)
               {linkCopied ? "Link copied" : "Copy link"}
             </span>
           </button>
+          {client && owned && (
+            <button
+              type="button"
+              className="menu__item"
+              disabled={busy}
+              onClick={() => void copyInvite()}
+            >
+              <span className="menu__item-icon">
+                <Icon name={inviteCopied ? "check" : "link"} size={18} />
+              </span>
+              <span className="menu__item-label">
+                {inviteCopied ? "Invite copied" : "Invite to edit"}
+              </span>
+              <span className="menu__item-shortcut">expires 7d</span>
+            </button>
+          )}
           {client && owned && (
             <button
               type="button"

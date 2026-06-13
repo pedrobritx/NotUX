@@ -11,7 +11,7 @@ SF Symbols, and the folder-based board library) are in place. The product-wide
 UX redesign — audit, design system, interaction specs, benchmarks, and the
 prioritised roadmap — lives in [`docs/redesign/`](docs/redesign/README.md).
 
-Realtime requires Supabase Realtime to be reachable by the `anon` role for the `notux-board-*` broadcast topics (the default, no-authorization Realtime mode works out of the box). Late-joiners get current board state from connected peers; persisting snapshots server-side for offline late-joiners is a later milestone.
+Access is membership-based: boards are private to their owner and shared through revocable, expiring **capability links** (see `0005_security_membership.sql` and [`docs/SETUP.md`](docs/SETUP.md)); uploaded materials live in a private Storage bucket served via signed URLs. Realtime uses the `notux-board-*` topics — public channels by default, or RLS-authorized **private channels** when `VITE_REALTIME_PRIVATE=true` and "Allow public access" is disabled in Realtime settings. Late-joiners get current board state from connected peers and the durable autosave snapshot.
 
 ## Repo layout
 

@@ -36,6 +36,35 @@ supabase db push
 user's account info is readable only by themselves) and a trigger that
 auto-creates/refreshes a profile from auth metadata on every sign-in.
 
+`0005_security_membership.sql` is the security hardening migration. It replaces
+the old "free-for-all public board" model with explicit membership
+(`board_members`) and hashed, expiring **capability share tokens**
+(`board_shares`). After applying it:
+
+- A board's creator is auto-enrolled as `owner`. Reads are allowed for
+  owners/members (and, transitionally, legacy `is_public` boards); **writes and
+  deletes require an owning or editing membership** — a leaked board UUID no
+  longer lets a stranger overwrite or wipe a lesson.
+- The **`board-assets` bucket is flipped to private**. Asset bytes are served
+  only via short-lived signed URLs whose issuance is gated by the same
+  membership RLS.
+- `realtime.messages` policies are added so Realtime channels can be authorized
+  by membership once you switch them to private (see step 2a).
+
+### 2a. Enable guest access and (optionally) private Realtime — **manual**
+
+The capability-token flow lets an account-less student join a shared board:
+
+1. **Authentication → Sign In / Providers → Anonymous sign-ins: enable.** When a
+   visitor opens an invite link, the app mints an anonymous session and redeems
+   the token into a scoped membership. Without this, only signed-in users can
+   redeem invites.
+2. *(Recommended)* **Realtime → Settings → disable "Allow public access"**, then
+   build the web app with `VITE_REALTIME_PRIVATE=true`. The client then opens
+   each board channel as a private, RLS-authorized channel so only members can
+   subscribe or broadcast. Leave this off until the policies in 0005 are applied
+   and anonymous sign-in works, or realtime collaboration will fail to connect.
+
 ## 3. Google OAuth (required for "Sign in with Google")
 
 ### 3a. Create a Google OAuth client — **you must do this manually**
@@ -107,8 +136,16 @@ pnpm dev      # http://localhost:5173
 
 - **Account/login info** lives in `profiles`, gated by RLS to the owning user
   only — no other user can read it.
-- **Annotations** on a private board are reachable only by the board owner
-  (RLS predicate: `is_public OR owner_id = auth.uid()`).
+- **Access is membership-based** (`board_members`). The owner and invited
+  collaborators can read a board; only owners and editing members can write or
+  delete. A board UUID alone grants nothing — the old enumeration/leak path is
+  closed.
+- **Sharing uses capability tokens** (`board_shares`): the owner mints a
+  high-entropy, role-scoped, expiring link; only its SHA-256 hash is stored, and
+  it's redeemed once into a membership. A guest student redeems via an anonymous
+  session rather than open public access.
+- **Uploaded materials** (PDF/image/audio) live in a **private** Storage bucket
+  and are reachable only through short-lived signed URLs gated by membership.
 - **Presence** (collaborator names/colors/avatars) is derived from each peer's
   own session and broadcast peer-to-peer over Realtime awareness — never by
   reading another user's profile row.
