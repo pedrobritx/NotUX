@@ -42,20 +42,7 @@ export function SaveStatus() {
   return (
     <div
       aria-live="polite"
-      style={{
-        position: "fixed",
-        bottom: 16,
-        right: 16,
-        padding: "4px 10px",
-        borderRadius: 8,
-        background: offline ? "rgba(120,80,20,0.85)" : "rgba(30,30,30,0.75)",
-        backdropFilter: "blur(8px)",
-        color: offline ? "rgba(255,220,160,0.95)" : "rgba(255,255,255,0.6)",
-        fontSize: 12,
-        pointerEvents: "none",
-        userSelect: "none",
-        zIndex: 20,
-      }}
+      className={"save-status" + (offline ? " save-status--offline" : "")}
     >
       {offline
         ? "Offline — saved locally, will sync when reconnected"

@@ -29,9 +29,11 @@ import { recordRecentColor, useRecentColors } from "./useRecentColors";
 // inspector panel, cutting cursor travel to near zero.
 
 const GAP = 12;
-// Keep clear of the dock (top-center) when flipping above tall selections.
-const TOP_SAFE = 72;
+// Clear the top bar (menus / share) above and the bottom-center dock below, so
+// the contextual toolbar never lands under either.
+const TOP_SAFE = 64;
 const EDGE = 8;
+const BOTTOM_SAFE = 92;
 
 const ALIGN_TEXT_OPTIONS: Array<{ id: TextAlign; icon: IconName; label: string }> = [
   { id: "left", icon: "align-left", label: "Align text left" },
@@ -253,7 +255,7 @@ export function SelectionToolbar({ pageId }: Props) {
     top = sy2 + GAP;
     placement = "bottom";
   }
-  top = Math.max(EDGE, Math.min(top, viewSize.h - barSize.h - EDGE));
+  top = Math.max(EDGE, Math.min(top, viewSize.h - barSize.h - BOTTOM_SAFE));
 
   // ---- selection facts ---------------------------------------------------
   function patchEach(make: (s: YShape) => Partial<YShape> | null) {
