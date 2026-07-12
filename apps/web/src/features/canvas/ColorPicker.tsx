@@ -1,5 +1,5 @@
-import { useState, type RefObject } from "react";
-import { Icon, Sheet, Slider, Swatch } from "@notux/ui";
+import { type RefObject } from "react";
+import { ColorField, Icon, Sheet, Slider, Swatch } from "@notux/ui";
 import { useDockStore } from "@notux/canvas";
 import { useSavedSwatches } from "./useSavedSwatches";
 import { recordRecentColor, useRecentColors } from "./useRecentColors";
@@ -15,9 +15,9 @@ interface EyeDropperCtor {
   new (): { open(): Promise<{ sRGBHex: string }> };
 }
 
-// Two-layer picker: the quick layer (curated palette, recents, favorites) is
-// always one click away; hex / opacity / save-color live behind a disclosure
-// so the common path stays a single tap.
+// The picker leads with a proper HSV field (saturation/value square + hue), so
+// any color is reachable directly. Curated palette, recents and saved swatches
+// sit below as one-tap shortcuts; opacity and save round it out.
 
 export function ColorPicker({ open, onClose, anchorRef }: Props) {
   const color = useDockStore((s) => s.instruments[s.activeInstrumentId].color);
@@ -28,13 +28,20 @@ export function ColorPicker({ open, onClose, anchorRef }: Props) {
   const setOpacity = useDockStore((s) => s.setActiveOpacity);
   const { swatches, addSwatch } = useSavedSwatches();
   const recents = useRecentColors();
-  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const lower = color.toLowerCase();
 
+  // Discrete choices (palette/recent/saved taps) set the color and record it.
   function pick(c: string) {
     setColor(c);
     recordRecentColor(c);
+  }
+
+  // Record the settled color into recents when the picker closes, so a single
+  // drag through the HSV field leaves one recent entry, not dozens.
+  function handleClose() {
+    recordRecentColor(color);
+    onClose();
   }
 
   const hasEyeDropper =
@@ -57,7 +64,7 @@ export function ColorPicker({ open, onClose, anchorRef }: Props) {
   const recentRow = recents.filter((c) => !paletteSet.has(c.toLowerCase()));
 
   return (
-    <Sheet open={open} onClose={onClose} anchorRef={anchorRef}>
+    <Sheet open={open} onClose={handleClose} anchorRef={anchorRef}>
       <div className="color-picker color-picker--mini">
         <div className="color-picker__header">
           {hasEyeDropper ? (
@@ -77,12 +84,16 @@ export function ColorPicker({ open, onClose, anchorRef }: Props) {
           <button
             type="button"
             className="color-picker__icon-btn"
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="Close color picker"
           >
             <Icon name="close" size={16} />
           </button>
         </div>
+
+        {/* Real HSV picker — any color is one drag away. Updates live; the
+            settled color is recorded into recents on close (see handleClose). */}
+        <ColorField value={color} onChange={setColor} />
 
         {/* Quick layer — curated palette */}
         <div className="color-palette-mini">
@@ -133,62 +144,27 @@ export function ColorPicker({ open, onClose, anchorRef }: Props) {
           </>
         )}
 
-        {/* Advanced layer — hex, opacity, save */}
-        <button
-          type="button"
-          className="color-picker__more"
-          onClick={() => setAdvancedOpen(!advancedOpen)}
-          aria-expanded={advancedOpen}
-        >
-          <Icon name={advancedOpen ? "chevron-up" : "chevron-down"} size={13} />
-          <span>{advancedOpen ? "Less" : "More"}</span>
-        </button>
+        <div className="color-picker__advanced">
+          <div className="color-picker__section-label">Opacity</div>
+          <Slider
+            value={opacity}
+            onChange={setOpacity}
+            trackStyle="opacity"
+            color={color}
+            aria-label="Opacity"
+          />
 
-        {advancedOpen && (
-          <div className="color-picker__advanced">
-            <div className="color-picker__hex-row">
-              <span className="color-picker__hex-label">#</span>
-              <input
-                className="color-picker__hex-input"
-                defaultValue={color.replace(/^#/, "")}
-                key={lower}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (/^#?[0-9a-f]{6}$/i.test(v)) {
-                    pick(v.startsWith("#") ? v : `#${v}`);
-                  }
-                }}
-                aria-label="Hex color"
-                spellCheck={false}
-                maxLength={7}
-              />
-              <div
-                className="color-picker__preview"
-                style={{ background: color }}
-              />
-            </div>
-
-            <div className="color-picker__section-label">Opacity</div>
-            <Slider
-              value={opacity}
-              onChange={setOpacity}
-              trackStyle="opacity"
-              color={color}
-              aria-label="Opacity"
-            />
-
-            <button
-              type="button"
-              className="color-picker__save-btn"
-              onClick={() => addSwatch(color)}
-              aria-label="Save current color"
-              title="Save current color"
-            >
-              <Icon name="plus" size={14} />
-              <span>Save color</span>
-            </button>
-          </div>
-        )}
+          <button
+            type="button"
+            className="color-picker__save-btn"
+            onClick={() => addSwatch(color)}
+            aria-label="Save current color"
+            title="Save current color"
+          >
+            <Icon name="plus" size={14} />
+            <span>Save color</span>
+          </button>
+        </div>
       </div>
     </Sheet>
   );

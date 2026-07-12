@@ -11,6 +11,19 @@ SF Symbols, and the folder-based board library) are in place. The product-wide
 UX redesign — audit, design system, interaction specs, benchmarks, and the
 prioritised roadmap — lives in [`docs/redesign/`](docs/redesign/README.md).
 
+## App flow
+
+The app opens on a marketing **landing page** (`/`) that leads to a **login
+screen** (`/login`) — Google OAuth, an email magic-link, or "continue without
+an account" for local-only use. From there you reach your **dashboard** (`/app`,
+sign-in gated with a graceful local-mode fallback) to create and organise
+boards, then the **board editor** (`/board/:id`). Auth is centralised in a
+single `SessionProvider`, and a top-level `ErrorBoundary` turns any render
+failure into a recoverable screen instead of a blank page.
+
+The color picker is a full HSV control (draggable saturation/brightness square +
+hue slider + validated hex), shared from `@notux/ui` as `ColorField`.
+
 Access is membership-based: boards are private to their owner and shared through revocable, expiring **capability links** (see `0005_security_membership.sql` and [`docs/SETUP.md`](docs/SETUP.md)); uploaded materials live in a private Storage bucket served via signed URLs. Realtime uses the `notux-board-*` topics — public channels by default, or RLS-authorized **private channels** when `VITE_REALTIME_PRIVATE=true` and "Allow public access" is disabled in Realtime settings. Late-joiners get current board state from connected peers and the durable autosave snapshot.
 
 ## Repo layout
