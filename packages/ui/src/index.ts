@@ -10,6 +10,18 @@ export { Sheet } from "./components/Sheet";
 export { Segmented } from "./components/Segmented";
 export { Slider } from "./components/Slider";
 export { Swatch } from "./components/Swatch";
+export { ColorField } from "./components/ColorField";
+export {
+  parseHex,
+  normalizeHex,
+  rgbToHex,
+  rgbToHsv,
+  hsvToRgb,
+  hsvToHex,
+  hueHex,
+  clamp,
+} from "./components/color";
+export type { RGB, HSV } from "./components/color";
 
 export { Instrument, INSTRUMENT_KINDS } from "./instruments/Instrument";
 export type { InstrumentKind } from "./instruments/Instrument";

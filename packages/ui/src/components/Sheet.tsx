@@ -33,6 +33,12 @@ function useIsNarrow(): boolean {
 /**
  * Responsive container: a bottom sheet on narrow screens, an anchored
  * Popover on wide ones. Used for the color picker.
+ *
+ * The popover uses "auto" placement so it opens toward the larger half of the
+ * viewport. The color picker anchors to the dock, which lives at the top of the
+ * screen by default — a fixed "top" placement would push the picker off the top
+ * edge (and make dragging in it misbehave), so it must flip below when the
+ * anchor sits high.
  */
 export function Sheet({ open, onClose, anchorRef, className, children }: Props) {
   const narrow = useIsNarrow();
@@ -51,7 +57,7 @@ export function Sheet({ open, onClose, anchorRef, className, children }: Props) 
   }
 
   return (
-    <Popover open={open} onClose={onClose} anchorRef={anchorRef} placement="top">
+    <Popover open={open} onClose={onClose} anchorRef={anchorRef} placement="auto">
       {children}
     </Popover>
   );

@@ -8,17 +8,20 @@ export default function AuthCallback() {
   useEffect(() => {
     const supa = getSupabase();
     if (!supa) {
-      navigate("/", { replace: true });
+      navigate("/app", { replace: true });
       return;
     }
+    // Wait for Supabase to parse the OAuth/magic-link fragment into a session,
+    // then land the user in their workspace.
     void supa.auth.getSession().then(() => {
-      navigate("/", { replace: true });
+      navigate("/app", { replace: true });
     });
   }, [navigate]);
 
   return (
-    <main className="auth-callback">
-      <p>Signing you in…</p>
-    </main>
+    <div className="app-loading" role="status" aria-label="Signing you in">
+      <span className="app-loading__spinner" />
+      <p className="app-loading__label">Signing you in…</p>
+    </div>
   );
 }
