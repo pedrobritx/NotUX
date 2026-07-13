@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type Ref } from "react";
+import { useEffect, useRef, useState, type Ref } from "react";
 import {
   GlassPanel,
   Icon,
@@ -114,8 +114,6 @@ export function Dock() {
   const instruments = useDockStore((s) => s.instruments);
   const activeId = useDockStore((s) => s.activeInstrumentId);
   const penStyle = useDockStore((s) => s.penStyle);
-  const collapsed = useDockStore((s) => s.collapsed);
-  const position = useDockStore((s) => s.position);
   const penPopoverOpen = useDockStore((s) => s.penPopoverOpen);
   const eraserPopoverOpen = useDockStore((s) => s.eraserPopoverOpen);
   const shapesFlyoutOpen = useDockStore((s) => s.shapesFlyoutOpen);
@@ -127,8 +125,6 @@ export function Dock() {
   const setPenStyle = useDockStore((s) => s.setPenStyle);
   const setActiveWidth = useDockStore((s) => s.setActiveWidth);
   const setActiveOpacity = useDockStore((s) => s.setActiveOpacity);
-  const setCollapsed = useDockStore((s) => s.setCollapsed);
-  const setPosition = useDockStore((s) => s.setPosition);
   const setPenPopoverOpen = useDockStore((s) => s.setPenPopoverOpen);
   const setEraserPopoverOpen = useDockStore((s) => s.setEraserPopoverOpen);
   const setShapesFlyoutOpen = useDockStore((s) => s.setShapesFlyoutOpen);
@@ -154,7 +150,6 @@ export function Dock() {
   const stickyBtnRef = useRef<HTMLButtonElement>(null);
   const colorBtnRef = useRef<HTMLSpanElement>(null);
   const importBtnRef = useRef<HTMLButtonElement>(null);
-  const collapsedRef = useRef<HTMLButtonElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
@@ -175,42 +170,6 @@ export function Dock() {
     closeAllPopovers();
   }
 
-  // ----- dragging the dock around -----------------------------------------
-  function onGripPointerDown(e: React.PointerEvent) {
-    e.preventDefault();
-    const dock = (e.currentTarget as HTMLElement).closest(".dock") as HTMLElement;
-    if (!dock) return;
-    const rect = dock.getBoundingClientRect();
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const baseX = position?.x ?? rect.left;
-    const baseY = position?.y ?? rect.top;
-    const w = rect.width;
-    const h = rect.height;
-    const move = (ev: PointerEvent) => {
-      const x = Math.max(8, Math.min(baseX + (ev.clientX - startX), window.innerWidth - w - 8));
-      const y = Math.max(8, Math.min(baseY + (ev.clientY - startY), window.innerHeight - h - 8));
-      setPosition({ x, y });
-    };
-    const up = () => {
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", up);
-    };
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", up);
-  }
-
-  // When a custom position is set, override the centered default.
-  const dockStyle: CSSProperties | undefined = position
-    ? { left: position.x, top: position.y, bottom: "auto", transform: "none" }
-    : undefined;
-
-  // Whether the dock currently sits in the top half of the viewport (the
-  // default). Drives collapse-chevron direction; popovers flip on their own.
-  const inTopHalf =
-    position === null ||
-    (typeof window !== "undefined" && position.y < window.innerHeight / 2);
-
   function onImportFiles(files: FileList | null, input: HTMLInputElement) {
     if (files && files.length > 0) {
       void useAssetStore.getState().importAtCenter(files);
@@ -223,50 +182,9 @@ export function Dock() {
     input?.click();
   }
 
-  if (collapsed) {
-    return (
-      <button
-        ref={collapsedRef}
-        type="button"
-        className="dock-collapsed"
-        style={dockStyle}
-        onClick={() => setCollapsed(false)}
-        title="Show tools"
-        aria-label="Show tools"
-      >
-        <Icon name={inTopHalf ? "chevron-down" : "chevron-up"} />
-      </button>
-    );
-  }
-
   return (
     <>
-      <GlassPanel
-        className="dock"
-        role="toolbar"
-        aria-label="Tools"
-        style={dockStyle}
-      >
-        <span
-          className="dock__grip"
-          onPointerDown={onGripPointerDown}
-          onDoubleClick={() => setPosition(null)}
-          title="Drag to move · double-click to re-center"
-          role="separator"
-          aria-label="Move toolbar"
-        >
-          <Icon name="grip" size={18} />
-        </span>
-
-        <ToolButton
-          icon="hand"
-          label="Hand (pan)"
-          active={tool === "hand"}
-          onClick={() => {
-            useToolStore.getState().setTool("hand");
-            closeAllPopovers();
-          }}
-        />
+      <GlassPanel className="dock" role="toolbar" aria-label="Tools">
         <ToolButton
           icon="select"
           label="Select"
@@ -276,6 +194,17 @@ export function Dock() {
             closeAllPopovers();
           }}
         />
+        <span className="dock__tool-wrap dock__tool-wrap--desktop">
+          <ToolButton
+            icon="hand"
+            label="Hand (pan)"
+            active={tool === "hand"}
+            onClick={() => {
+              useToolStore.getState().setTool("hand");
+              closeAllPopovers();
+            }}
+          />
+        </span>
 
         <span className="dock__divider" />
 
@@ -365,18 +294,6 @@ export function Dock() {
           chevron
           onClick={() => setImportPopoverOpen(!importPopoverOpen)}
         />
-
-        <span className="dock__divider" />
-
-        <button
-          type="button"
-          className="dock__chrome-btn"
-          onClick={() => setCollapsed(true)}
-          title="Hide tools"
-          aria-label="Hide tools"
-        >
-          <Icon name={inTopHalf ? "chevron-up" : "chevron-down"} size={18} />
-        </button>
       </GlassPanel>
 
       {/* Brush popover: pen styles (pen family) + width + opacity. */}

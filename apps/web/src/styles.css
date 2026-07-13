@@ -84,6 +84,31 @@ a {
   flex: none;
 }
 
+/* Phones: brand + actions on the top row, search on its own full-width row so
+   it's actually usable. */
+@media (max-width: 640px) {
+  .library__bar {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px 16px;
+  }
+  .library__title {
+    display: none;
+  }
+  .library__search {
+    order: 3;
+    flex-basis: 100%;
+    max-width: none;
+    margin-left: 0;
+  }
+  .library__new span {
+    display: none;
+  }
+  .library__new {
+    padding: 10px 14px;
+  }
+}
+
 .library__brand {
   display: flex;
   align-items: center;
@@ -542,6 +567,47 @@ a {
   padding: 0 2px;
 }
 
+/* Phones: keep presence from pushing the share button off-screen. */
+@media (max-width: 640px) {
+  .collab-bar {
+    max-width: 46vw;
+  }
+  .collab-bar__avatars {
+    overflow: hidden;
+  }
+}
+
+/* ----- Save status pill -------------------------------------------------- */
+
+.save-status {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgba(30, 30, 30, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  pointer-events: none;
+  user-select: none;
+  z-index: 20;
+}
+
+.save-status--offline {
+  background: rgba(120, 80, 20, 0.85);
+  color: rgba(255, 220, 160, 0.95);
+}
+
+/* Above the bottom dock on phones so the two never overlap. */
+@media (max-width: 640px) {
+  .save-status {
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    right: 12px;
+  }
+}
+
 .collab-avatar {
   appearance: none;
   border: 2px solid var(--bg-1);
@@ -985,4 +1051,385 @@ a {
 .snapshots__restore:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* ----- App loading + crash screens -------------------------------------- */
+
+.app-loading {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: var(--bg-0);
+  color: var(--fg-1);
+}
+
+.app-loading__spinner {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid var(--glass-stroke);
+  border-top-color: var(--accent);
+  animation: notux-spin 0.7s linear infinite;
+}
+
+.app-loading__label {
+  margin: 0;
+  font-size: 14px;
+}
+
+@keyframes notux-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.crash {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--bg-0);
+  color: var(--fg-0);
+}
+
+.crash__card {
+  max-width: 460px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 32px;
+  border-radius: 20px;
+  background: var(--glass-tint);
+  border: 1px solid var(--glass-stroke);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+}
+
+.crash__title {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+
+.crash__body {
+  margin: 0;
+  color: var(--fg-1);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.crash__detail {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--field-bg);
+  color: var(--fg-1);
+  font-size: 12px;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 160px;
+  overflow: auto;
+}
+
+.crash__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+/* ----- Auth screen (login) ---------------------------------------------- */
+
+.auth-screen {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 24px;
+  background:
+    radial-gradient(60% 50% at 50% 0%, rgba(88, 86, 214, 0.28), transparent 70%),
+    radial-gradient(50% 40% at 80% 100%, rgba(90, 200, 250, 0.22), transparent 70%),
+    var(--bg-0);
+  overflow: auto;
+}
+
+.auth-screen__theme,
+.auth-screen__back {
+  position: absolute;
+  top: 20px;
+  appearance: none;
+  border: 1px solid var(--glass-stroke);
+  background: var(--glass-tint);
+  color: var(--fg-0);
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.auth-screen__theme {
+  right: 20px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.auth-screen__back {
+  left: 20px;
+  height: 38px;
+  border-radius: 999px;
+  padding: 0 14px 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.auth-screen__theme:hover,
+.auth-screen__back:hover {
+  background: var(--glass-hover);
+}
+
+.auth-screen__legal {
+  margin: 0;
+  color: var(--fg-1);
+  font-size: 12.5px;
+}
+
+.auth-card {
+  width: min(400px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 32px;
+  border-radius: 22px;
+  background: var(--glass-tint);
+  border: 1px solid var(--glass-stroke);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+
+.auth-card__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.auth-card__logo {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: linear-gradient(160deg, var(--accent), #5856d6);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.auth-card__wordmark {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.auth-card__title {
+  margin: 6px 0 0;
+  font-size: 26px;
+  letter-spacing: -0.02em;
+}
+
+.auth-card__sub {
+  margin: 0 0 6px;
+  color: var(--fg-1);
+  font-size: 14.5px;
+  line-height: 1.45;
+}
+
+.auth-card__google,
+.auth-card__wide {
+  width: 100%;
+}
+
+.auth-card__email {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auth-card__input {
+  width: 100%;
+  appearance: none;
+  border: 1px solid var(--glass-stroke);
+  background: var(--field-bg);
+  color: var(--fg-0);
+  border-radius: 999px;
+  padding: 11px 18px;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+.auth-card__input:focus-visible {
+  border-color: var(--accent);
+}
+
+.auth-card__divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--fg-1);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.auth-card__divider::before,
+.auth-card__divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--glass-stroke);
+}
+
+.auth-card__guest {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--fg-0);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.auth-card__guest:hover {
+  color: var(--accent);
+}
+
+.auth-card__note {
+  margin: 0;
+  color: var(--fg-1);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.auth-card__error {
+  margin: 0;
+  color: #ff6b6b;
+  font-size: 13.5px;
+}
+
+/* ----- Dashboard account menu ------------------------------------------- */
+
+.library__signin {
+  padding: 8px 16px;
+}
+
+.account {
+  position: relative;
+  flex: none;
+}
+
+.account__button {
+  appearance: none;
+  border: 1px solid var(--glass-stroke);
+  background: var(--glass-tint);
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.account__button:hover {
+  background: var(--glass-hover);
+}
+
+.account__avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.account__avatar--initial {
+  background: linear-gradient(160deg, var(--accent), #5856d6);
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.account__menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  border-radius: 12px;
+  background: var(--popover-bg);
+  border: 1px solid var(--glass-stroke);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+.account__id {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--glass-stroke);
+  margin-bottom: 4px;
+}
+
+.account__name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.account__email {
+  font-size: 12px;
+  color: var(--fg-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account__menu button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--fg-0);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.account__menu button:hover {
+  background: var(--glass-hover);
 }

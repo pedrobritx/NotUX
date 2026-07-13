@@ -62,7 +62,7 @@ export default function Landing() {
           </button>
           <button
             className="lp-cta lp-cta--sm"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/login")}
             id="lp-open-app-nav"
           >
             Open App
@@ -83,7 +83,7 @@ export default function Landing() {
         <div className="lp-hero__actions lp-reveal">
           <button
             className="lp-cta lp-cta--lg"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/login")}
             id="lp-get-started"
           >
             Get started — it's free
@@ -99,7 +99,6 @@ export default function Landing() {
             width="960"
             height="960"
             loading="eager"
-            fetchPriority="high"
           />
         </div>
       </header>
@@ -186,7 +185,7 @@ export default function Landing() {
         </p>
         <button
           className="lp-cta lp-cta--lg"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/login")}
           id="lp-cta-final"
         >
           Launch NotUX
