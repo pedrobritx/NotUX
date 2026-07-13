@@ -1,4 +1,4 @@
-import { type RefObject } from "react";
+import { useState, type RefObject } from "react";
 import { ColorField, Icon, Sheet, Slider, Swatch } from "@notux/ui";
 import { useDockStore } from "@notux/canvas";
 import { useSavedSwatches } from "./useSavedSwatches";
@@ -15,9 +15,9 @@ interface EyeDropperCtor {
   new (): { open(): Promise<{ sRGBHex: string }> };
 }
 
-// The picker leads with a proper HSV field (saturation/value square + hue), so
-// any color is reachable directly. Curated palette, recents and saved swatches
-// sit below as one-tap shortcuts; opacity and save round it out.
+// Simple by default: the curated palette, recents and saved swatches are all
+// one tap away. The full HSV field (any color) lives behind a "Custom"
+// disclosure so the common case stays calm and uncluttered.
 
 export function ColorPicker({ open, onClose, anchorRef }: Props) {
   const color = useDockStore((s) => s.instruments[s.activeInstrumentId].color);
@@ -28,6 +28,7 @@ export function ColorPicker({ open, onClose, anchorRef }: Props) {
   const setOpacity = useDockStore((s) => s.setActiveOpacity);
   const { swatches, addSwatch } = useSavedSwatches();
   const recents = useRecentColors();
+  const [customOpen, setCustomOpen] = useState(false);
 
   const lower = color.toLowerCase();
 
@@ -44,8 +45,7 @@ export function ColorPicker({ open, onClose, anchorRef }: Props) {
     onClose();
   }
 
-  const hasEyeDropper =
-    typeof window !== "undefined" && "EyeDropper" in window;
+  const hasEyeDropper = typeof window !== "undefined" && "EyeDropper" in window;
 
   async function pickFromScreen() {
     const Ctor = (window as unknown as { EyeDropper?: EyeDropperCtor })
@@ -67,20 +67,8 @@ export function ColorPicker({ open, onClose, anchorRef }: Props) {
     <Sheet open={open} onClose={handleClose} anchorRef={anchorRef}>
       <div className="color-picker color-picker--mini">
         <div className="color-picker__header">
-          {hasEyeDropper ? (
-            <button
-              type="button"
-              className="color-picker__icon-btn color-picker__icon-btn--eyedropper"
-              onClick={pickFromScreen}
-              aria-label="Pick color from screen"
-              title="Pick color from screen"
-            >
-              <Icon name="eyedropper" size={18} />
-            </button>
-          ) : (
-            <span />
-          )}
-          <div className="color-picker__title">Colors</div>
+          <span className="color-picker__swatch-lg" style={{ background: color }} />
+          <div className="color-picker__title">Color</div>
           <button
             type="button"
             className="color-picker__icon-btn"
@@ -91,17 +79,13 @@ export function ColorPicker({ open, onClose, anchorRef }: Props) {
           </button>
         </div>
 
-        {/* Real HSV picker — any color is one drag away. Updates live; the
-            settled color is recorded into recents on close (see handleClose). */}
-        <ColorField value={color} onChange={setColor} />
-
         {/* Quick layer — curated palette */}
         <div className="color-palette-mini">
           {COLORS.map((c) => (
             <Swatch
               key={c}
               color={c}
-              size={26}
+              size={28}
               selected={c.toLowerCase() === lower}
               onClick={() => pick(c)}
               aria-label={c}
@@ -110,61 +94,81 @@ export function ColorPicker({ open, onClose, anchorRef }: Props) {
         </div>
 
         {recentRow.length > 0 && (
-          <>
-            <div className="color-picker__section-label">Recent</div>
-            <div className="color-palette-mini">
-              {recentRow.map((c) => (
-                <Swatch
-                  key={c}
-                  color={c}
-                  size={26}
-                  selected={c.toLowerCase() === lower}
-                  onClick={() => pick(c)}
-                  aria-label={c}
-                />
-              ))}
-            </div>
-          </>
+          <div className="color-palette-mini color-palette-mini--start">
+            {recentRow.map((c) => (
+              <Swatch
+                key={c}
+                color={c}
+                size={24}
+                selected={c.toLowerCase() === lower}
+                onClick={() => pick(c)}
+                aria-label={c}
+              />
+            ))}
+          </div>
         )}
 
         {swatches.length > 0 && (
-          <>
-            <div className="color-picker__section-label">Saved</div>
-            <div className="color-palette-mini">
-              {swatches.map((c) => (
-                <Swatch
-                  key={c}
-                  color={c}
-                  size={26}
-                  selected={c.toLowerCase() === lower}
-                  onClick={() => pick(c)}
-                />
-              ))}
-            </div>
-          </>
+          <div className="color-palette-mini color-palette-mini--start">
+            {swatches.map((c) => (
+              <Swatch
+                key={c}
+                color={c}
+                size={24}
+                selected={c.toLowerCase() === lower}
+                onClick={() => pick(c)}
+              />
+            ))}
+          </div>
         )}
 
-        <div className="color-picker__advanced">
-          <div className="color-picker__section-label">Opacity</div>
-          <Slider
-            value={opacity}
-            onChange={setOpacity}
-            trackStyle="opacity"
-            color={color}
-            aria-label="Opacity"
-          />
+        {/* Opacity — always useful (highlighter, fills). */}
+        <Slider
+          value={opacity}
+          onChange={setOpacity}
+          trackStyle="opacity"
+          color={color}
+          aria-label="Opacity"
+        />
 
-          <button
-            type="button"
-            className="color-picker__save-btn"
-            onClick={() => addSwatch(color)}
-            aria-label="Save current color"
-            title="Save current color"
-          >
-            <Icon name="plus" size={14} />
-            <span>Save color</span>
-          </button>
-        </div>
+        {/* Custom disclosure — the full HSV picker, hidden until asked for. */}
+        <button
+          type="button"
+          className="color-picker__more"
+          onClick={() => setCustomOpen((v) => !v)}
+          aria-expanded={customOpen}
+        >
+          <Icon name={customOpen ? "chevron-up" : "chevron-down"} size={13} />
+          <span>{customOpen ? "Hide custom color" : "Custom color"}</span>
+        </button>
+
+        {customOpen && (
+          <div className="color-picker__advanced">
+            <ColorField value={color} onChange={setColor} />
+            <div className="color-picker__custom-actions">
+              {hasEyeDropper && (
+                <button
+                  type="button"
+                  className="color-picker__save-btn"
+                  onClick={pickFromScreen}
+                  aria-label="Pick color from screen"
+                >
+                  <Icon name="eyedropper" size={14} />
+                  <span>Screen</span>
+                </button>
+              )}
+              <button
+                type="button"
+                className="color-picker__save-btn"
+                onClick={() => addSwatch(color)}
+                aria-label="Save current color"
+              >
+                <Icon name="plus" size={14} />
+                <span>Save</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </Sheet>
   );

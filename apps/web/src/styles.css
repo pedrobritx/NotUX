@@ -84,6 +84,31 @@ a {
   flex: none;
 }
 
+/* Phones: brand + actions on the top row, search on its own full-width row so
+   it's actually usable. */
+@media (max-width: 640px) {
+  .library__bar {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px 16px;
+  }
+  .library__title {
+    display: none;
+  }
+  .library__search {
+    order: 3;
+    flex-basis: 100%;
+    max-width: none;
+    margin-left: 0;
+  }
+  .library__new span {
+    display: none;
+  }
+  .library__new {
+    padding: 10px 14px;
+  }
+}
+
 .library__brand {
   display: flex;
   align-items: center;
@@ -540,6 +565,47 @@ a {
   display: flex;
   align-items: center;
   padding: 0 2px;
+}
+
+/* Phones: keep presence from pushing the share button off-screen. */
+@media (max-width: 640px) {
+  .collab-bar {
+    max-width: 46vw;
+  }
+  .collab-bar__avatars {
+    overflow: hidden;
+  }
+}
+
+/* ----- Save status pill -------------------------------------------------- */
+
+.save-status {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgba(30, 30, 30, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  pointer-events: none;
+  user-select: none;
+  z-index: 20;
+}
+
+.save-status--offline {
+  background: rgba(120, 80, 20, 0.85);
+  color: rgba(255, 220, 160, 0.95);
+}
+
+/* Above the bottom dock on phones so the two never overlap. */
+@media (max-width: 640px) {
+  .save-status {
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    right: 12px;
+  }
 }
 
 .collab-avatar {

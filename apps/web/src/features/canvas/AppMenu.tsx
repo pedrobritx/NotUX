@@ -93,6 +93,8 @@ export function AppMenu({ boardId, client, owned }: AppMenuProps) {
   const [embedOpen, setEmbedOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  // On phones the four text menus collapse into one consolidated menu.
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const background = useSettingsStore((s) => s.background);
   const grid = useSettingsStore((s) => s.grid);
@@ -104,6 +106,7 @@ export function AppMenu({ boardId, client, owned }: AppMenuProps) {
   const [overIdx, setOverIdx] = useState<number | null>(null);
 
   const closeTimer = useRef<number>();
+  const menuBtnRef = useRef<HTMLButtonElement>(null);
   const fileBtnRef = useRef<HTMLButtonElement>(null);
   const editBtnRef = useRef<HTMLButtonElement>(null);
   const viewBtnRef = useRef<HTMLButtonElement>(null);
@@ -121,11 +124,6 @@ export function AppMenu({ boardId, client, owned }: AppMenuProps) {
 
   function scheduleCloseMenu() {
     closeTimer.current = window.setTimeout(() => setActiveMenu(null), 150);
-  }
-
-  function run(fn: () => void) {
-    fn();
-    setActiveMenu(null);
   }
 
   function selectedIds(): string[] {
@@ -192,9 +190,111 @@ export function AppMenu({ boardId, client, owned }: AppMenuProps) {
 
   const cmd = () => useCommandStore.getState();
 
+  // Menu contents, defined once and reused by both the desktop menu bar and the
+  // single consolidated menu shown on phones. `close` lets the mobile menu shut
+  // itself after an action.
+  function fileItems(close: () => void) {
+    return (
+      <>
+        <MenuItem icon="chevron-left" label="Back to files" onClick={() => { close(); navigate("/app"); }} />
+        <MenuItem icon="plus" label="New page" onClick={() => { close(); setActivePage(addPage()); }} />
+        <MenuItem icon="upload" label="Import image, PDF or audio" disabled={!canImport} onClick={() => { close(); fileInputRef.current?.click(); }} />
+        <MenuItem icon="plus" label="Embed YouTube / Google Drive…" disabled={!canImport} onClick={() => { close(); setEmbedOpen(true); }} />
+        <MenuItem icon="download" label={exporting ? "Exporting…" : "Export as PDF…"} disabled={exporting} onClick={() => { close(); setExportOpen(true); }} />
+        <MenuItem icon={linkCopied ? "check" : "link"} label={linkCopied ? "Link copied" : "Copy share link"} onClick={copyShareLink} />
+        <MenuItem icon="history" label="Snapshots…" onClick={() => { close(); setSnapshotsOpen(true); }} />
+      </>
+    );
+  }
+
+  function editItems(close: () => void) {
+    return (
+      <>
+        <MenuItem icon="undo" label="Undo" shortcut="⌘Z" disabled={!canUndo} onClick={() => { close(); cmd().undo?.(); }} />
+        <MenuItem icon="redo" label="Redo" shortcut="⌘⇧Z" disabled={!canRedo} onClick={() => { close(); cmd().redo?.(); }} />
+        <MenuItem label="Select all" shortcut="⌘A" onClick={() => { close(); selectAll(); }} />
+        <MenuItem icon="trash" label="Delete selection" disabled={!hasSelection} onClick={() => { close(); deleteSelection(); }} />
+      </>
+    );
+  }
+
+  function viewItems(close: () => void) {
+    return (
+      <>
+        <MenuItem icon="zoom-in" label="Zoom in" onClick={() => { close(); cmd().zoomIn?.(); }} />
+        <MenuItem icon="zoom-out" label="Zoom out" onClick={() => { close(); cmd().zoomOut?.(); }} />
+        <MenuItem icon="zoom-reset" label="Reset zoom" onClick={() => { close(); cmd().zoomReset?.(); }} />
+        <MenuItem icon={theme === "dark" ? "sun" : "moon"} label={theme === "dark" ? "Light mode" : "Dark mode"} onClick={() => { close(); toggleTheme(); }} />
+        <div className="menu__row" role="group" aria-label="Background">
+          <span className="menu__row-label">Background</span>
+          <span className="menu__row-options">
+            {(Object.keys(BACKGROUND_PRESETS) as BackgroundPresetId[]).map((id) => (
+              <button
+                key={id}
+                type="button"
+                className={"menu__bg-swatch" + (background === id ? " menu__bg-swatch--active" : "")}
+                style={{ background: BACKGROUND_PRESETS[id][theme] }}
+                onClick={() => setBackground(id)}
+                title={BACKGROUND_PRESETS[id].label}
+                aria-label={BACKGROUND_PRESETS[id].label}
+                aria-pressed={background === id}
+              />
+            ))}
+          </span>
+        </div>
+        <div className="menu__row" role="group" aria-label="Grid">
+          <span className="menu__row-label">Grid</span>
+          <span className="menu__row-options menu__grid-seg">
+            {GRID_OPTIONS.map((g) => (
+              <button
+                key={g.id}
+                type="button"
+                className={"menu__grid-btn" + (grid === g.id ? " menu__grid-btn--active" : "")}
+                onClick={() => setGrid(g.id)}
+                title={g.label}
+                aria-label={`${g.label} grid`}
+                aria-pressed={grid === g.id}
+              >
+                <Icon name={g.icon} size={18} />
+              </button>
+            ))}
+          </span>
+        </div>
+        <MenuItem icon="cursors" label="Show collaborator cursors" checked={showRemoteCursors} onClick={() => setShowRemoteCursors(!showRemoteCursors)} />
+      </>
+    );
+  }
+
+  function arrangeItems(close: () => void) {
+    return (
+      <>
+        <MenuItem icon="to-front" label="Bring to front" disabled={!hasSelection} onClick={() => { close(); zOrder("front"); }} />
+        <MenuItem icon="forward" label="Bring forward" disabled={!hasSelection} onClick={() => { close(); zOrder("forward"); }} />
+        <MenuItem icon="backward" label="Send backward" disabled={!hasSelection} onClick={() => { close(); zOrder("backward"); }} />
+        <MenuItem icon="to-back" label="Send to back" disabled={!hasSelection} onClick={() => { close(); zOrder("back"); }} />
+        <MenuItem icon="lock" label="Lock / unlock" disabled={!hasSelection} onClick={() => { close(); toggleLock(); }} />
+      </>
+    );
+  }
+
+  const closeMobile = () => setMobileMenuOpen(false);
+
   return (
     <>
       <GlassPanel className="app-menu" aria-label="Menu">
+        <button
+          ref={menuBtnRef}
+          type="button"
+          className="app-menu__btn app-menu__menu-toggle"
+          onClick={() => setMobileMenuOpen((o) => !o)}
+          aria-haspopup="menu"
+          aria-expanded={mobileMenuOpen}
+          aria-label="Menu"
+          title="Menu"
+        >
+          <Icon name="menu" size={18} />
+        </button>
+        <span className="app-menu__menus">
         <button
           ref={fileBtnRef}
           className={`app-menu__btn app-menu__text-btn ${activeMenu === "file" ? "app-menu__text-btn--active" : ""}`}
@@ -227,6 +327,7 @@ export function AppMenu({ boardId, client, owned }: AppMenuProps) {
         >
           Arrange
         </button>
+        </span>
 
         <div className="app-menu__divider" />
 
@@ -254,81 +355,49 @@ export function AppMenu({ boardId, client, owned }: AppMenuProps) {
       {/* File Menu */}
       <Popover open={activeMenu === "file"} onClose={() => setActiveMenu(null)} anchorRef={fileBtnRef} placement="bottom" className="menu-popover">
         <PopoverMenu onEnter={() => openMenu("file")} onLeave={scheduleCloseMenu}>
-          <MenuItem icon="chevron-left" label="Back to files" onClick={() => run(() => navigate("/"))} />
-          <MenuItem icon="plus" label="New page" onClick={() => run(() => setActivePage(addPage()))} />
-          <MenuItem icon="upload" label="Import image, PDF or audio" disabled={!canImport} onClick={() => run(() => fileInputRef.current?.click())} />
-          <MenuItem icon="plus" label="Embed YouTube / Google Drive…" disabled={!canImport} onClick={() => { setActiveMenu(null); setEmbedOpen(true); }} />
-          <MenuItem icon="download" label={exporting ? "Exporting…" : "Export as PDF…"} disabled={exporting} onClick={() => { setActiveMenu(null); setExportOpen(true); }} />
-          <MenuItem icon={linkCopied ? "check" : "link"} label={linkCopied ? "Link copied" : "Copy share link"} onClick={copyShareLink} />
-          <MenuItem icon="history" label="Snapshots…" onClick={() => { setActiveMenu(null); setSnapshotsOpen(true); }} />
+          {fileItems(() => setActiveMenu(null))}
         </PopoverMenu>
       </Popover>
 
       {/* Edit Menu */}
       <Popover open={activeMenu === "edit"} onClose={() => setActiveMenu(null)} anchorRef={editBtnRef} placement="bottom" className="menu-popover">
         <PopoverMenu onEnter={() => openMenu("edit")} onLeave={scheduleCloseMenu}>
-          <MenuItem icon="undo" label="Undo" shortcut="⌘Z" disabled={!canUndo} onClick={() => run(() => cmd().undo?.())} />
-          <MenuItem icon="redo" label="Redo" shortcut="⌘⇧Z" disabled={!canRedo} onClick={() => run(() => cmd().redo?.())} />
-          <MenuItem label="Select all" shortcut="⌘A" onClick={() => run(selectAll)} />
-          <MenuItem icon="trash" label="Delete selection" disabled={!hasSelection} onClick={() => run(deleteSelection)} />
+          {editItems(() => setActiveMenu(null))}
         </PopoverMenu>
       </Popover>
 
       {/* View Menu */}
       <Popover open={activeMenu === "view"} onClose={() => setActiveMenu(null)} anchorRef={viewBtnRef} placement="bottom" className="menu-popover">
         <PopoverMenu onEnter={() => openMenu("view")} onLeave={scheduleCloseMenu}>
-          <MenuItem icon="zoom-in" label="Zoom in" onClick={() => run(() => cmd().zoomIn?.())} />
-          <MenuItem icon="zoom-out" label="Zoom out" onClick={() => run(() => cmd().zoomOut?.())} />
-          <MenuItem icon="zoom-reset" label="Reset zoom" onClick={() => run(() => cmd().zoomReset?.())} />
-          <MenuItem icon={theme === "dark" ? "sun" : "moon"} label={theme === "dark" ? "Light mode" : "Dark mode"} onClick={() => run(toggleTheme)} />
-          <div className="menu__row" role="group" aria-label="Background">
-            <span className="menu__row-label">Background</span>
-            <span className="menu__row-options">
-              {(Object.keys(BACKGROUND_PRESETS) as BackgroundPresetId[]).map((id) => (
-                <button
-                  key={id}
-                  type="button"
-                  className={"menu__bg-swatch" + (background === id ? " menu__bg-swatch--active" : "")}
-                  style={{ background: BACKGROUND_PRESETS[id][theme] }}
-                  onClick={() => setBackground(id)}
-                  title={BACKGROUND_PRESETS[id].label}
-                  aria-label={BACKGROUND_PRESETS[id].label}
-                  aria-pressed={background === id}
-                />
-              ))}
-            </span>
-          </div>
-          <div className="menu__row" role="group" aria-label="Grid">
-            <span className="menu__row-label">Grid</span>
-            <span className="menu__row-options menu__grid-seg">
-              {GRID_OPTIONS.map((g) => (
-                <button
-                  key={g.id}
-                  type="button"
-                  className={"menu__grid-btn" + (grid === g.id ? " menu__grid-btn--active" : "")}
-                  onClick={() => setGrid(g.id)}
-                  title={g.label}
-                  aria-label={`${g.label} grid`}
-                  aria-pressed={grid === g.id}
-                >
-                  <Icon name={g.icon} size={18} />
-                </button>
-              ))}
-            </span>
-          </div>
-          <MenuItem icon="cursors" label="Show collaborator cursors" checked={showRemoteCursors} onClick={() => setShowRemoteCursors(!showRemoteCursors)} />
+          {viewItems(() => setActiveMenu(null))}
         </PopoverMenu>
       </Popover>
 
       {/* Arrange Menu */}
       <Popover open={activeMenu === "arrange"} onClose={() => setActiveMenu(null)} anchorRef={arrangeBtnRef} placement="bottom" className="menu-popover">
         <PopoverMenu onEnter={() => openMenu("arrange")} onLeave={scheduleCloseMenu}>
-          <MenuItem icon="to-front" label="Bring to front" disabled={!hasSelection} onClick={() => run(() => zOrder("front"))} />
-          <MenuItem icon="forward" label="Bring forward" disabled={!hasSelection} onClick={() => run(() => zOrder("forward"))} />
-          <MenuItem icon="backward" label="Send backward" disabled={!hasSelection} onClick={() => run(() => zOrder("backward"))} />
-          <MenuItem icon="to-back" label="Send to back" disabled={!hasSelection} onClick={() => run(() => zOrder("back"))} />
-          <MenuItem icon="lock" label="Lock / unlock" disabled={!hasSelection} onClick={() => run(toggleLock)} />
+          {arrangeItems(() => setActiveMenu(null))}
         </PopoverMenu>
+      </Popover>
+
+      {/* Consolidated menu — phones only (the four text menus are hidden). */}
+      <Popover
+        open={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        anchorRef={menuBtnRef}
+        placement="bottom"
+        className="menu-popover"
+      >
+        <div className="menu menu--sections">
+          <div className="menu__section-title">File</div>
+          {fileItems(closeMobile)}
+          <div className="menu__section-title">Edit</div>
+          {editItems(closeMobile)}
+          <div className="menu__section-title">View</div>
+          {viewItems(closeMobile)}
+          <div className="menu__section-title">Arrange</div>
+          {arrangeItems(closeMobile)}
+        </div>
       </Popover>
 
       {/* Pages list popover */}
