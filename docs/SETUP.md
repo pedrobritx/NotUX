@@ -78,7 +78,7 @@ The capability-token flow lets an account-less student join a shared board:
    - **Authorized JavaScript origins**:
      ```
      http://localhost:5173
-     https://pedrobritx.github.io
+     https://notux.britx.me
      https://<project>.supabase.co
      ```
    - **Authorized redirect URIs** (this is the Supabase callback, not the app):
@@ -100,7 +100,7 @@ Client ID and Client Secret, enable, and **Save**.
 
 Confirm **Authentication → URL Configuration** includes:
 - `http://localhost:5173/auth/callback`
-- `https://pedrobritx.github.io/NotUX/auth/callback`
+- `https://notux.britx.me/auth/callback`
 
 These are already declared for local dev in `supabase/config.toml`.
 
