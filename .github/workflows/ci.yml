@@ -32,5 +32,5 @@ jobs:
 
       - name: Build web (no Supabase env required)
         env:
-          VITE_BASE_PATH: /NotUX/
+          VITE_BASE_PATH: /
         run: pnpm -F @notux/web build

@@ -21,7 +21,7 @@ enabled = true
 site_url = "http://localhost:5173"
 additional_redirect_urls = [
   "http://localhost:5173/auth/callback",
-  "https://pedrobritx.github.io/NotUX/auth/callback",
+  "https://notux.britx.me/auth/callback",
 ]
 jwt_expiry = 3600
 enable_signup = true

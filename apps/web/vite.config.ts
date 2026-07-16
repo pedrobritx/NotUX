@@ -2,10 +2,10 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
 
-const repoBase = process.env.VITE_BASE_PATH ?? "/NotUX/";
+const basePath = process.env.VITE_BASE_PATH ?? "/";
 
 export default defineConfig({
-  base: repoBase,
+  base: basePath,
   plugins: [react()],
   resolve: {
     alias: {

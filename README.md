@@ -65,7 +65,7 @@ Pushing to `main` runs the GitHub Pages workflow. The repo's two secrets must be
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 
-The site builds with `base: /NotUX/` and copies `index.html` → `404.html` so the SPA router survives deep links.
+The site builds with `base: /` for the `notux.britx.me` GitHub Pages custom subdomain and copies `index.html` → `404.html` so the SPA router survives deep links. Set `VITE_BASE_PATH=/NotUX/` only when intentionally deploying under the old repository subpath.
 
 ## Plan
 
