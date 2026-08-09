@@ -17,7 +17,7 @@
     "@supabase/supabase-js": "^2.106.2",
     "jspdf": "^4.2.1",
     "konva": "^9.3.16",
-    "nanoid": "^5.0.7",
+    "nanoid": "^5.1.16",
     "pdfjs-dist": "^4.7.76",
     "perfect-freehand": "^1.2.2",
     "react-konva": "^18.2.10",
